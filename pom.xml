@@ -97,7 +97,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>org.example.jobagent.JobAgentApplication</mainClass>
+                    <mainClass>com.jobagent.JobAgentApplication</mainClass>
                     <skip>true</skip>
                 </configuration>
                 <executions>
