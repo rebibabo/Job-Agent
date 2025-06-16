@@ -1,0 +1,25 @@
+server:
+  port: 8081
+
+spring:
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: ${database.driver}
+    url: ${database.url}
+    username: ${database.username}
+    password: ${database.password}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+
+jwt:
+  admin-secret-key: jobagent
+  admin-ttl: 7200000
+  admin-token-name: token
