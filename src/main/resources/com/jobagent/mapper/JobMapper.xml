@@ -2,36 +2,70 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.jobagent.mapper.JobMapper">
     <select id="pageQuery" resultType="com.jobagent.entity.Job">
-        select * from job
+        SELECT j.*, c.* FROM job j
+        LEFT JOIN company c ON j.companyId = c.id
         <where>
+            <!-- 关键词搜索（标题或描述） -->
             <if test="jobPageDTO.keyword != null and jobPageDTO.keyword != ''">
-                AND title LIKE CONCAT('%', #{jobPageDTO.keyword}, '%')
-            </if>
-            <if test="jobPageDTO.city != null and jobPageDTO.city != ''">
-                AND city = #{jobPageDTO.city}
+                AND (j.title LIKE CONCAT('%', #{jobPageDTO.keyword}, '%') OR j.description LIKE CONCAT('%', #{jobPageDTO.keyword}, '%'))
             </if>
 
-            <!-- 判断List字段是否为空（size > 0） -->
-            <if test="jobPageDTO.experience != null and jobPageDTO.experience.size() > 0">
-                AND experience IN
-                <foreach collection="jobPageDTO.experience" item="exp" open="(" separator="," close=")">
+            <!-- 单值字段 -->
+            <if test="jobPageDTO.city != null and jobPageDTO.city != ''">
+                AND j.city = #{jobPageDTO.city}
+            </if>
+            <if test="jobPageDTO.jobType != null and jobPageDTO.jobType != ''">
+                AND j.jobType = #{jobPageDTO.jobType}
+            </if>
+            <if test="jobPageDTO.title != null and jobPageDTO.title != ''">
+                AND j.title = #{jobPageDTO.title}
+            </if>
+            <if test="jobPageDTO.salary != null and jobPageDTO.salary != ''">
+                AND j.salary = #{jobPageDTO.salary}
+            </if>
+            <if test="jobPageDTO.areaBusiness != null and jobPageDTO.areaBusiness != ''">
+                AND j.region = #{jobPageDTO.areaBusiness}
+            </if>
+
+            <!-- 多选List字段 -->
+            <if test="jobPageDTO.experience != null and jobPageDTO.experience != ''">
+                AND j.experience IN
+                <foreach collection="jobPageDTO.getExperienceList()" item="exp" open="(" separator="," close=")">
                     #{exp}
                 </foreach>
             </if>
 
-            <if test="jobPageDTO.degree != null and jobPageDTO.degree.size() > 0">
-                AND degree IN
-                <foreach collection="jobPageDTO.degree" item="deg" open="(" separator="," close=")">
+            <if test="jobPageDTO.degree != null and jobPageDTO.degree != ''">
+                AND j.degree IN
+                <foreach collection="jobPageDTO.getDegreeList()" item="deg" open="(" separator="," close=")">
                     #{deg}
                 </foreach>
             </if>
 
-            <!-- 其他List字段同理 -->
-            <if test="jobPageDTO.industry != null and jobPageDTO.industry.size() > 0">
-                AND industry IN
-                <foreach collection="jobPageDTO.industry" item="ind" open="(" separator="," close=")">
+            <if test="jobPageDTO.industry != null and jobPageDTO.industry != ''">
+                AND j.industry IN
+                <foreach collection="jobPageDTO.getIndustryList()" item="ind" open="(" separator="," close=")">
                     #{ind}
                 </foreach>
+            </if>
+
+            <!-- 多选字段（来自 company 表） -->
+            <if test="jobPageDTO.scale != null and jobPageDTO.scale != ''">
+                AND c.scale IN
+                <foreach collection="jobPageDTO.getScaleList()" item="sca" open="(" separator="," close=")">
+                    #{sca}
+                </foreach>
+            </if>
+            <if test="jobPageDTO.stage != null and jobPageDTO.stage != ''">
+                AND c.stage IN
+                <foreach collection="jobPageDTO.getStageList()" item="sta" open="(" separator="," close=")">
+                    #{sta}
+                </foreach>
+            </if>
+
+            <!-- 通过 companyId 直接关联查询 -->
+            <if test="jobPageDTO.companyId != null">
+                AND j.companyId = #{jobPageDTO.companyId}
             </if>
         </where>
     </select>

@@ -152,7 +152,7 @@ def init_job_table(tables):
                 salary VARCHAR(40) COMMENT '薪水',
                 salaryFloor INTEGER COMMENT '最低薪水',
                 salaryCeiling INTEGER COMMENT '最高薪水',
-                crawlDate DATETIME COMMENT '获取职位时的日期',
+                crawlDate DATE COMMENT '获取职位时的日期',
                 city VARCHAR(20) NOT NULL COMMENT '城市',
                 region VARCHAR(20) COMMENT '城市区域',
                 experience VARCHAR(20) COMMENT '工作经验要求',

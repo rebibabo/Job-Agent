@@ -19,12 +19,14 @@ public class JobServiceImpl implements JobService {
     private JobMapper jobMapper;
 
     public PageResult page(JobPageDTO jobPageDTO){
-        PageHelper.startPage(jobPageDTO.getPage(), jobPageDTO.getPageSize());
+        int pageNo = jobPageDTO.getPage(),  pageSize = jobPageDTO.getPageSize();
+        PageHelper.startPage(pageNo, pageSize);
         Page<Job> page = jobMapper.pageQuery(jobPageDTO);
 
         long total = page.getTotal();
         List<Job> records = page.getResult();
-
-        return new PageResult(total, records);
+        PageResult pageResult = new PageResult(total, records);
+        pageResult._hasNext(pageNo, pageSize);
+        return pageResult;
     }
 }

@@ -35,6 +35,7 @@ public class CityServiceImpl implements CityService {
         Page<City> p = (Page<City>) cityList;
 
         PageResult pageBean = new PageResult(p.getTotal(), p.getResult());
+        pageBean._hasNext(pageNo, pageSize);
         return pageBean;
     }
 

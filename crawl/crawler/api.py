@@ -31,7 +31,7 @@ def save_job_to_db(title: str, js: dict) -> Job:
     job = Job()
     job.securityId_(js["securityId"]).lid_(js["lid"]).jobName_(js["jobName"]).jobType_(js["jobType"]).salary_(js["salaryDesc"])\
         .crawlDate_(datetime.datetime.now().strftime("%Y-%m-%d")).city_(js["cityName"]).region_(js["areaDistrict"]).experience_(js["jobExperience"])\
-        .degree_("jobDegree").industry_(js["brandIndustry"]).title_(title).skills_(','.join(js["skills"]))
+        .degree_(js["jobDegree"]).industry_(js["brandIndustry"]).title_(title).skills_(','.join(js["skills"]))
         
     companyId = js["encryptBrandId"]
     if not companyId:

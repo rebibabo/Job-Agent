@@ -9,3 +9,15 @@
 2. 实现全局异常处理器GlobalExceptionHandle
 
 前后端联调实现登录功能
+
+
+6-17
+后端：
+1. 添加PageResult返回值，为分页查询的对象
+2. 添加分页查询岗位的接口，新增Job对象，用来表示岗位信息
+
+新增爬虫功能（crawl文件夹）
+1. 使用pymysql操纵数据库，database包定义了连接池对象、init数据库方法、实体父类entity和两个实体类company和job
+2. utils工具包configLoader能够自动加载yml配置文件，cache能够将循环遍历索引持久化保存，爬虫中断后可恢复
+3. crawl中token能够获取cookie，requestHelper封装了查询接口，query实现将输入转化为查询的params，api提供查询工作的接口，main为爬虫主程序入口
+

@@ -22,7 +22,7 @@ public class Job {
     private String salary;
     private int salaryFloor;
     private int salaryCeiling;
-    private LocalDateTime crawlDate;
+    private String crawlDate;
     private String city;
     private String region;
     private String experience;
@@ -31,5 +31,8 @@ public class Job {
     private String title;
     private String skills;
     private String description;
+    private String scale;
+    private String stage;
+    private String welfare;
 }
 

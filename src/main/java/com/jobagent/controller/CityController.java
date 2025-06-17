@@ -41,7 +41,7 @@ public class CityController {
             @RequestParam(defaultValue = "") String cityName,
             @RequestParam(defaultValue = "") String regionName) {
         log.info("分页查询，参数{},{},{},{},{}",  pageNo, pageSize, provinceName, cityName, regionName);
-        PageResult pageBean = cityService.page(pageNo, pageSize, provinceName, cityName, regionName);
-        return Result.success(pageBean);
+        PageResult pageResult = cityService.page(pageNo, pageSize, provinceName, cityName, regionName);
+        return Result.success(pageResult);
     }
 }
