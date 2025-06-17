@@ -19,16 +19,22 @@
         <span slot="title">首页</span>
       </el-menu-item>
       
-      <el-submenu index="1">
+      <el-menu-item index="/job">
+        <i class="el-icon-s-data"></i>
+        <span slot="title">职位查询</span>
+      </el-menu-item>
+
+      <!-- <el-submenu index="1">
         <template slot="title">
           <i class="el-icon-s-order"></i>
           <span>订单管理</span>
         </template>
         <el-menu-item index="/order/list">订单列表</el-menu-item>
         <el-menu-item index="/order/statistics">订单统计</el-menu-item>
-      </el-submenu>
+      </el-submenu> -->
       
-      <el-submenu index="2">
+      
+      <!-- <el-submenu index="2">
         <template slot="title">
           <i class="el-icon-user"></i>
           <span>用户管理</span>
@@ -40,7 +46,7 @@
       <el-menu-item index="/settings">
         <i class="el-icon-setting"></i>
         <span slot="title">系统设置</span>
-      </el-menu-item>
+      </el-menu-item> -->
     </el-menu>
   </template>
   
