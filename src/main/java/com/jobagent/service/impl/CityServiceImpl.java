@@ -4,7 +4,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.jobagent.mapper.CityMapper;
 import com.jobagent.entity.City;
-import com.jobagent.entity.PageBean;
+import com.jobagent.vo.PageResult;
 import com.jobagent.service.CityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,13 +28,13 @@ public class CityServiceImpl implements CityService {
     }
 
     @Override
-    public PageBean page(Integer pageNo, Integer pageSize, String provinceName, String cityName, String regionName){
+    public PageResult page(Integer pageNo, Integer pageSize, String provinceName, String cityName, String regionName){
         PageHelper.startPage(pageNo,pageSize);
 
         List<City> cityList = cityMapper.listFilter(provinceName, cityName, regionName);
         Page<City> p = (Page<City>) cityList;
 
-        PageBean pageBean = new PageBean(p.getTotal(), p.getResult());
+        PageResult pageBean = new PageResult(p.getTotal(), p.getResult());
         return pageBean;
     }
 

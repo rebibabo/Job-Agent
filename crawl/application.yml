@@ -1,0 +1,12 @@
+database:
+  mysql:
+    host: localhost
+    port: 3306
+    username: rebibabo
+    password: "123456"
+    database-name: jobagent
+    max-connections: 20
+
+crawler:
+  retry-num: 3
+  set-token: False

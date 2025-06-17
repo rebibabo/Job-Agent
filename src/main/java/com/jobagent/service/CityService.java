@@ -1,7 +1,7 @@
 package com.jobagent.service;
 
 import com.jobagent.entity.City;
-import com.jobagent.entity.PageBean;
+import com.jobagent.vo.PageResult;
 
 import java.util.List;
 
@@ -9,6 +9,6 @@ import java.util.List;
 public interface CityService {
     List<City> list();
     List<City> listByCity(String city);
-    PageBean page(Integer pageNo, Integer pageSize, String provinceName,
-                  String cityName, String regionName);
+    PageResult page(Integer pageNo, Integer pageSize, String provinceName,
+                    String cityName, String regionName);
 }

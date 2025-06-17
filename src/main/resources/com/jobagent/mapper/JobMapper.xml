@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jobagent.mapper.JobMapper">
+    <select id="pageQuery" resultType="com.jobagent.entity.Job">
+        select * from job
+        <where>
+            <if test="jobPageDTO.keyword != null and jobPageDTO.keyword != ''">
+                AND title LIKE CONCAT('%', #{jobPageDTO.keyword}, '%')
+            </if>
+            <if test="jobPageDTO.city != null and jobPageDTO.city != ''">
+                AND city = #{jobPageDTO.city}
+            </if>
+
+            <!-- 判断List字段是否为空（size > 0） -->
+            <if test="jobPageDTO.experience != null and jobPageDTO.experience.size() > 0">
+                AND experience IN
+                <foreach collection="jobPageDTO.experience" item="exp" open="(" separator="," close=")">
+                    #{exp}
+                </foreach>
+            </if>
+
+            <if test="jobPageDTO.degree != null and jobPageDTO.degree.size() > 0">
+                AND degree IN
+                <foreach collection="jobPageDTO.degree" item="deg" open="(" separator="," close=")">
+                    #{deg}
+                </foreach>
+            </if>
+
+            <!-- 其他List字段同理 -->
+            <if test="jobPageDTO.industry != null and jobPageDTO.industry.size() > 0">
+                AND industry IN
+                <foreach collection="jobPageDTO.industry" item="ind" open="(" separator="," close=")">
+                    #{ind}
+                </foreach>
+            </if>
+        </where>
+    </select>
+</mapper>

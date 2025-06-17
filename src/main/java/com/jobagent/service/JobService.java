@@ -1,0 +1,12 @@
+package com.jobagent.service;
+
+import com.jobagent.dto.JobPageDTO;
+import com.jobagent.vo.PageResult;
+import com.jobagent.vo.Result;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public interface JobService {
+    PageResult page(JobPageDTO jobPageDTO);
+}

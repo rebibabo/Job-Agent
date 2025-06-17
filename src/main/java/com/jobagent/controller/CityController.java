@@ -1,8 +1,8 @@
 package com.jobagent.controller;
 
+import com.jobagent.vo.PageResult;
 import lombok.extern.slf4j.Slf4j;
 import com.jobagent.entity.City;
-import com.jobagent.entity.PageBean;
 import com.jobagent.service.CityService;
 import com.jobagent.vo.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +41,7 @@ public class CityController {
             @RequestParam(defaultValue = "") String cityName,
             @RequestParam(defaultValue = "") String regionName) {
         log.info("分页查询，参数{},{},{},{},{}",  pageNo, pageSize, provinceName, cityName, regionName);
-        PageBean pageBean = cityService.page(pageNo, pageSize, provinceName, cityName, regionName);
+        PageResult pageBean = cityService.page(pageNo, pageSize, provinceName, cityName, regionName);
         return Result.success(pageBean);
     }
 }

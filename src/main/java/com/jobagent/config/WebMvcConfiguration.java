@@ -50,7 +50,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
         Docket docket = new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(apiInfo)
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("org.example.jobagent.controller"))
+                .apis(RequestHandlerSelectors.basePackage("com.jobagent.controller"))
                 .paths(PathSelectors.any())
                 .build();
         return docket;
