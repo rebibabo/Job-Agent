@@ -24,7 +24,7 @@
         <span slot="title">职位查询</span>
       </el-menu-item>
 
-      <el-menu-item index="/">
+      <el-menu-item index="/analysis">
         <i class="el-icon-s-data"></i>
         <span slot="title">职位分析</span>
       </el-menu-item>

@@ -39,6 +39,14 @@ const router = new Router({
             },
         },
         {
+            path: "/analysis",
+            name: "Analysis",
+            component: () => import("@/views/analysis.vue"),
+            meta: {
+                title: "职位查询"
+            },
+        },
+        {
             path: "/",
             name: "Root",
             redirect: "/homePage",

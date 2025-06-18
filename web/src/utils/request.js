@@ -26,17 +26,24 @@ service.interceptors.request.use(
 )
 
 // 响应拦截器
+let isRedirecting = false;
+
 service.interceptors.response.use(
-  response => {
-    return response.data
-  },
+  response => response.data,
   error => {
     if (error.response?.status === 401) {
-      this.$message.error('登录已过期，请重新登录')
-      router.push('/login') 
+      if (!isRedirecting) {
+        isRedirecting = true;
+        alert('登录已过期，请重新登录');
+          store.state.user.token = ''; // 清空token
+          store.state.user.userInfo = {}; // 清空用户信息
+        router.push('/login').finally(() => {
+          isRedirecting = false;
+        });
+      }
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
-)
+);
 
 export default service
