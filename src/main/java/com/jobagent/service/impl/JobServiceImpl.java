@@ -29,4 +29,19 @@ public class JobServiceImpl implements JobService {
         pageResult._hasNext(pageNo, pageSize);
         return pageResult;
     }
+
+    @Override
+    public List<String> cityList() {
+        return jobMapper.cityList();
+    }
+
+    @Override
+    public List<String> industryList() {
+        return jobMapper.industryList();
+    }
+
+    @Override
+    public List<String> titleList() {
+        return jobMapper.titleList();
+    }
 }

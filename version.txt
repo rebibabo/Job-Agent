@@ -24,3 +24,13 @@
 2. utils工具包configLoader能够自动加载yml配置文件，cache能够将循环遍历索引持久化保存，爬虫中断后可恢复
 3. crawl中token能够获取cookie，requestHelper封装了查询接口，query实现将输入转化为查询的params，api提供查询工作的接口，main为爬虫主程序入口
 
+
+6-18
+前端:
+1. 岗位表单自动加载，实现分页查询
+
+后端：
+1. 优化查询sql，将原始job left join company修改为了where子句中的拼接，将查询时间从30s降低至0.5s
+2. 新增job下的city,industry和title接口，用来查询表中这些字段的枚举
+
+前后端联调实现岗位查询功能
