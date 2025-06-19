@@ -81,6 +81,8 @@
             GROUP BY ${chartDTO.dimensionName}
         ) AS t
         ON all_ele.${chartDTO.dimensionName} = t.${chartDTO.dimensionName}
+        WHERE
+            t.count >= 50
         ORDER BY avgSalaryFloor DESC;
     </select>
 </mapper>

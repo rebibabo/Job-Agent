@@ -20,9 +20,18 @@ public interface JobMapper {
             "ORDER BY city_code;")
     List<String> cityList();
 
-    @Select("SELECT DISTINCT industry FROM job;")
+    @Select("select distinct industry from (select industry, count(*) from job group by industry having count(*) >=50) as t;")
     List<String> industryList();
 
-    @Select("SELECT DISTINCT title FROM job;")
+    @Select("select distinct title from (select title, count(*) from job group by title having count(*) >=50) as t;")
     List<String> titleList();
+
+    @Select("select city from (select distinct city, city_code, city_id from city where city_id like '%0100' order by city_id) as t;")
+    List<String> cityListAll();
+
+    @Select("select distinct subtype from industry;")
+    List<String> industryListAll();
+
+    @Select("select distinct name from title;")
+    List<String> titleListAll();
 }

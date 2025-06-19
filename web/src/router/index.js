@@ -5,7 +5,7 @@ import store from '@/store'
 Vue.use(Router);
 
 const router = new Router({
-    mode: "history", // 推荐使用history模式，URL更美观
+    mode: "hash", // 推荐使用history模式，URL更美观
     routes: [{
             path: '/login',
             name: 'Login',
@@ -26,6 +26,14 @@ const router = new Router({
             path: "/homePage",
             name: "HomePage",
             component: () => import("@/views/homePage.vue"),
+            meta: {
+                title: "首页"
+            },
+        },
+        {
+            path: "/search",
+            name: "JobSearch",
+            component: () => import("@/views/search.vue"),
             meta: {
                 title: "首页"
             },

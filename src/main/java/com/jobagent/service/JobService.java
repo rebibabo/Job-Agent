@@ -16,5 +16,11 @@ public interface JobService {
 
     List<String> industryList();
 
-    List<String> titleList();
+    List<String>  titleList();
+
+    List<String> cityListAll();
+
+    List<String> industryListAll();
+
+    List<String> titleListAll();
 }

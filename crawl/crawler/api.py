@@ -2,7 +2,8 @@ from crawler.requestHelper import Request
 from crawler.query import JobQuery
 from database.job import Job
 from database.company import Company
-from utils.tools import generate_random_id
+from database.connector import redis_connector
+from utils.tools import generate_random_id, get_user_id
 from loguru import logger
 import datetime
 import time
@@ -81,10 +82,14 @@ def save_job_to_db(title: str, js: dict) -> Job:
     return job
     
 
-def get_job_list(query: JobQuery, max_num=1000):
+def get_job_list(query: JobQuery, user_id: str=None):
     url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
     num = 0
     while True:
+        status = int(redis_connector.hget(user_id, "running").decode())
+        if status == 0:
+            print("停止运行")
+            return
         params = {
             "page": 1,
             "pageSize": "30",       # 最大是30
@@ -98,6 +103,8 @@ def get_job_list(query: JobQuery, max_num=1000):
             "query": query.query,
             "position": query.position
         }
+        if user_id is None:
+            user_id = get_user_id()
         response = Request.get(url, params=params)
         try:
             data = response.json()
@@ -110,7 +117,7 @@ def get_job_list(query: JobQuery, max_num=1000):
             for job in jobList:
                 save_job_to_db(query.title, job)
                 num += 1
-                if num >= max_num:
+                if num >= query.limit:
                     return
             if zpData["hasMore"] == False:
                 break
@@ -118,6 +125,9 @@ def get_job_list(query: JobQuery, max_num=1000):
                 params["page"] += 1
         else:
             break
-        
+        status = int(redis_connector.hget(user_id, "running").decode())
+        if status == 0:
+            print("停止运行")
+            return
         time.sleep(3)
         

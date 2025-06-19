@@ -10,3 +10,5 @@ STAGE = {x["name"]: x["code"] for x in code_json["stageList"]}
 JOBTYPE = {x["name"]: x["code"] for x in code_json["jobTypeList"]}
 
 WAIT_FOR_LOAD = "networkidle"
+USER_ID_NAME = "USER_ID"
+DEFAULT_USER_ID = "1"

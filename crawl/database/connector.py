@@ -3,6 +3,9 @@ from dbutils.pooled_db import PooledDB
 import pymysql  # 可根据需要替换为其他数据库驱动
 from utils.configLoader import inject_config
 from loguru import logger
+import redis
+
+redis_connector = redis.Redis(host='localhost', port=6379, db=0)
 
 @inject_config("application.yml", "database.mysql")
 class DatabasePool:

@@ -3,7 +3,8 @@ from typing import List
 from database.connector import db_pool
 
 class JobQuery:
-    def __init__(self,
+    def __init__(self, 
+        userId: int,                # 用户ID    
         keyword: str='',            # 搜索关键词
         city: str='',               # 城市名称
         experience: List[str]=[],   # 经验要求
@@ -13,9 +14,11 @@ class JobQuery:
         stage: List[str]=[],        # 融资情况
         jobType: str='',            # 职位性质
         title: str='',              # 职位类型
-        salary: str='',             # 薪资范围
+        salary: List[str]=[],             # 薪资范围
         areaBusiness: str='',       # 区域商圈
+        limit: int=300,             # 最大返回数量
     ):
+        self.userId = userId
         expereinces = []
         for exp in experience:
             exp_id = EXPERIENCE.get(exp, '')
@@ -23,8 +26,16 @@ class JobQuery:
                 expereinces.append(exp_id)
         self.experience = ','.join(expereinces)
         self.title = title
-        self.salary = SALARY.get(salary, '')
+        
         self.jobType = JOBTYPE.get(jobType, '')
+        self.limit = limit
+                
+        salaries = []
+        for sal in salary:
+            sal_id = SALARY.get(sal, '')
+            if sal_id:
+                salaries.append(sal_id)
+        self.salary = ','.join(salaries)
                 
         degrees = []
         for deg in degree:

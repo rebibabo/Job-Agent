@@ -1,6 +1,10 @@
+import redis
+from database.connector import redis_connector
+from constant import *
 import hashlib
 import random
 import string
+import os
 
 def md5_encrypt(text):
     """对字符串进行MD5加密"""
@@ -36,3 +40,12 @@ def builder(cls):
 def generate_random_id(length):
     """生成随机ID，长度为length，字符集为0-9a-zA-Z"""
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def set_user_id(userId=DEFAULT_USER_ID):
+    if not os.path.exists(f"cache/{userId}"):
+        os.makedirs(f"cache/{userId}")
+    os.environ[USER_ID_NAME] = userId
+    return userId
+
+def get_user_id():
+    return os.environ.get(USER_ID_NAME)

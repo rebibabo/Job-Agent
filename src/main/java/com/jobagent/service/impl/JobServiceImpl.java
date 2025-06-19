@@ -44,4 +44,19 @@ public class JobServiceImpl implements JobService {
     public List<String> titleList() {
         return jobMapper.titleList();
     }
+
+    @Override
+    public List<String> cityListAll() {
+        return jobMapper.cityListAll();
+    }
+
+    @Override
+    public List<String> industryListAll() {
+        return jobMapper.industryListAll();
+    }
+
+    @Override
+    public List<String> titleListAll() {
+        return jobMapper.titleListAll();
+    }
 }

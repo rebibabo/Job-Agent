@@ -62,10 +62,16 @@ class Request:
         "__a": "11520517.1722925713.1738760655.1750060305.250.10.16.16"
     }
 
-    fetcher = TokenFetcher()
+    fetcher = None
     max_retry = 5
     request_cnt = max_retry
 
+    @classmethod
+    def get_fetcher(cls):
+        if cls.fetcher is None:
+            cls.fetcher = TokenFetcher()
+        return cls.fetcher
+    
     @staticmethod
     def update_zp_token():
         _headers = {
@@ -106,7 +112,8 @@ class Request:
 
         Request.cookies["bst"] = bst_cookie
         Request.headers["zp_token"] = bst_cookie
-        Request.cookies["__zp_stoken__"] = Request.fetcher.get_token()
+        fetcher = Request.get_fetcher()
+        Request.cookies["__zp_stoken__"] = fetcher.get_token()
         
     
     @staticmethod

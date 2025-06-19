@@ -10,7 +10,14 @@ module.exports = defineConfig({
         pathRewrite: {
           "^/api": "", // 去掉路径中的 /api 前缀
         },
-      },
+          },
+          "/search": {
+              target: "http://localhost:5000",
+              changeOrigin: true,
+              pathRewrite: {
+                  "^/search": ""
+              }
+        }
     },
   },
 });

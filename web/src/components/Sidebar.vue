@@ -18,6 +18,11 @@
         <i class="el-icon-s-home"></i>
         <span slot="title">首页</span>
       </el-menu-item>
+
+      <el-menu-item index="/search">
+        <i class="el-icon-s-data"></i>
+        <span slot="title">职位获取</span>
+      </el-menu-item>
       
       <el-menu-item index="/job">
         <i class="el-icon-s-data"></i>

@@ -1,4 +1,5 @@
 from playwright.sync_api import sync_playwright
+from utils.tools import get_user_id
 import os
 
 def wait_for_disappear(page, cssselector, message=None, timeout=30):
@@ -17,9 +18,9 @@ def wait_for_disappear(page, cssselector, message=None, timeout=30):
         time.sleep(1)
     return False
 
-def login(browser):
-    if os.path.exists("cache/state.json"):
-        context = browser.new_context(storage_state="cache/state.json")
+def login(browser, cache_dir):
+    if os.path.exists(f"{cache_dir}/state.json"):
+        context = browser.new_context(storage_state=f"{cache_dir}/state.json")
     else:
         context = browser.new_context()
     page = context.new_page()
@@ -35,7 +36,7 @@ def login(browser):
             page.locator(".wx-login-btn").click()       # 选择微信扫码登录
         
         if wait_for_disappear(page, '.mini-app-login', "等待登录中..."):
-            context.storage_state(path="cache/state.json")
+            context.storage_state(path=f"{cache_dir}/state.json")
         else:
             print("登录失败")
             
@@ -43,10 +44,13 @@ def login(browser):
     
     
 class TokenFetcher:
+    userId = get_user_id()
+    
     def __init__(self):
         self.playwright = sync_playwright().start()  # 手动启动，不自动关闭
         self.browser = self.playwright.chromium.launch(headless=False)
-        self.context = login(self.browser)
+        cache_dir = f"cache/{self.userId}"
+        self.context = login(self.browser, cache_dir)
 
     def get_token(self):
         page = self.context.new_page()
@@ -64,6 +68,6 @@ class TokenFetcher:
         self.playwright.stop()
 
 if __name__ == '__main__':       
-    fetcher = TokenFetcher()
+    fetcher = TokenFetcher("1")
     print(fetcher.get_token())
     print(fetcher.get_token())

@@ -49,4 +49,25 @@ public class JobController {
         return Result.success(jobService.titleList());
     }
 
+    @GetMapping("/cityAll")
+    @ApiOperation("查询数据库中有哪些城市的工作")
+    public Result<List<String>> cityListAll(){
+        log.info("查询数据库中的城市");
+        return Result.success(jobService.cityListAll());
+    }
+
+    @GetMapping("/industryAll")
+    @ApiOperation("查询数据库中有哪些行业")
+    public Result<List<String>> industryListAll(){
+        log.info("查询数据库中的行业");
+        return Result.success(jobService.industryListAll());
+    }
+
+    @GetMapping("/titleAll")
+    @ApiOperation("查询数据库中有哪些岗位")
+    public Result<List<String>> titleListAll(){
+        log.info("查询数据库中的岗位");
+        return Result.success(jobService.titleListAll());
+    }
+
 }
