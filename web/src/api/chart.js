@@ -1,21 +1,12 @@
 import request from '@/utils/request'
 
-export const cityChartAPI = () => {
-    return request.post('/api/chart/city')
+
+export const chartAPI = (params) => {
+    return request.post('/api/chart/', params)
 }
 
-export const industryChartAPI = () => {
-    return request.post('/api/chart/industry')
-}
-
-export const titleChartAPI = () => {
-    return request.post('/api/chart/title')
-}
-
-export const experienceChartAPI = () => {
-    return request.post('/api/chart/experience')
-}
-
-export const degreeChartAPI = () => {
-    return request.post('/api/chart/degree')
+export const wordCloudAPI = (title) => {
+    return request.get('/api/chart/wordCloud/' + title, {
+        responseType: 'blob'  // 告诉 axios 返回的是二进制流
+    });
 }

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jobagent.mapper.ChartMapper">
+    <select id="getChartData" resultType="com.jobagent.vo.SalaryVO">
+        SELECT
+            all_ele.${chartDTO.dimensionName} as dimensionValue,
+            IFNULL(t.avgSalaryFloor, 0) AS salaryFloor,
+            IFNULL(t.avgSalaryCeiling, 0) AS salaryCeiling,
+            IFNULL(t.count, 0) AS count
+        FROM
+            (SELECT DISTINCT ${chartDTO.dimensionName} from job) AS all_ele
+        LEFT JOIN (
+            SELECT
+                ${chartDTO.dimensionName},
+                AVG(salaryFloor) AS avgSalaryFloor,
+                AVG(salaryCeiling) AS avgSalaryCeiling,
+                COUNT(*) AS count
+            FROM (
+                SELECT j.*
+                FROM job j, company c
+                <where>
+                    <!-- 多选List字段 -->
+                    <if test="chartDTO.city != null and chartDTO.city != ''">
+                        AND j.city IN
+                        <foreach collection="chartDTO.getCityList()" item="exp" open="(" separator="," close=")">
+                            #{exp}
+                        </foreach>
+                    </if>
+                    <if test="chartDTO.title != null and chartDTO.title != ''">
+                        AND j.title IN
+                        <foreach collection="chartDTO.getTitleList()" item="exp" open="(" separator="," close=")">
+                            #{exp}
+                        </foreach>
+                    </if>
+                    <if test="chartDTO.salary != null and chartDTO.salary != ''">
+                        AND j.salary IN
+                        <foreach collection="chartDTO.getSalaryList()" item="exp" open="(" separator="," close=")">
+                            #{exp}
+                        </foreach>
+                    </if>
+                    <if test="chartDTO.experience != null and chartDTO.experience != ''">
+                        AND j.experience IN
+                        <foreach collection="chartDTO.getExperienceList()" item="exp" open="(" separator="," close=")">
+                            #{exp}
+                        </foreach>
+                    </if>
+
+                    <if test="chartDTO.degree != null and chartDTO.degree != ''">
+                        AND j.degree IN
+                        <foreach collection="chartDTO.getDegreeList()" item="deg" open="(" separator="," close=")">
+                            #{deg}
+                        </foreach>
+                    </if>
+
+                    <if test="chartDTO.industry != null and chartDTO.industry != ''">
+                        AND j.industry IN
+                        <foreach collection="chartDTO.getIndustryList()" item="ind" open="(" separator="," close=")">
+                            #{ind}
+                        </foreach>
+                    </if>
+
+                    <!-- 多选字段（来自 company 表） -->
+                    <if test="chartDTO.scale != null and chartDTO.scale != ''">
+                        AND c.scale IN
+                        <foreach collection="chartDTO.getScaleList()" item="sca" open="(" separator="," close=")">
+                            #{sca}
+                        </foreach>
+                    </if>
+                    <if test="chartDTO.stage != null and chartDTO.stage != ''">
+                        AND c.stage IN
+                        <foreach collection="chartDTO.getStageList()" item="sta" open="(" separator="," close=")">
+                            #{sta}
+                        </foreach>
+                    </if>
+
+                    AND j.companyId = c.id
+                    AND j.salaryFloor != 0
+                    AND j.salaryCeiling != 0
+                </where>
+            ) AS temp
+            GROUP BY ${chartDTO.dimensionName}
+        ) AS t
+        ON all_ele.${chartDTO.dimensionName} = t.${chartDTO.dimensionName}
+        ORDER BY avgSalaryFloor DESC;
+    </select>
+</mapper>

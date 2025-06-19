@@ -79,8 +79,8 @@ export default {
             const option = {
                 title: { text: this.title, top: 0, textStyle: { fontSize: 20 } },
                 tooltip: { trigger: 'axis' },
-                legend: { data: this.yFields.map(y => y.label) },
-                grid: { top: 80, bottom: 90 },
+                legend: { data: this.yFields.map(y => y.label), right: 10 },
+                grid: { top: 80, bottom: 120, left: 70, right: 70 },
                 xAxis: { data: xAxisData, axisLabel: {interval: 0,  rotate: 45  } },
                 yAxis: [
                     {

@@ -1,8 +1,8 @@
 <template>
-    <el-form :inline="true" class="demo-form-inline" style="display: flex; flex-wrap: wrap; gap: 10px;">
+    <el-form :inline="true" class="demo-form-inline" style="display: flex; flex-wrap: wrap; gap: 0px;">
         <!-- 工作城市 -->
         <el-form-item label="工作城市">
-            <el-select v-model="localFilters.city" multiple placeholder="工作城市" style="width: 270px;"
+            <el-select v-model="localFilters.city" multiple placeholder="工作城市" style="width: 220px;"
                 @change="val => handleSelectChange('city', val)">
                 <el-option v-for="item in cityList" :key="item" :label="item" :value="item" />
             </el-select>
@@ -10,7 +10,7 @@
 
         <!-- 经验要求 -->
         <el-form-item label="经验要求">
-            <el-select v-model="localFilters.experience" multiple placeholder="经验要求" style="width: 270px;"
+            <el-select v-model="localFilters.experience" multiple placeholder="经验要求" style="width: 220px;"
                 @change="val => handleSelectChange('experience', val)">
                 <el-option v-for="item in experienceList" :key="item" :label="item" :value="item" />
             </el-select>
@@ -18,7 +18,7 @@
 
         <!-- 学历要求 -->
         <el-form-item label="学历要求">
-            <el-select v-model="localFilters.degree" multiple placeholder="学历要求" style="width: 270px;"
+            <el-select v-model="localFilters.degree" multiple placeholder="学历要求" style="width: 220px;"
                 @change="val => handleSelectChange('degree', val)">
                 <el-option v-for="item in degreeList" :key="item" :label="item" :value="item" />
             </el-select>
@@ -26,7 +26,7 @@
 
         <!-- 工作岗位 -->
         <el-form-item label="工作岗位">
-            <el-select v-model="localFilters.title" multiple placeholder="工作岗位" style="width: 270px;"
+            <el-select v-model="localFilters.title" multiple placeholder="工作岗位" style="width: 220px;"
                 @change="val => handleSelectChange('title', val)">
                 <el-option v-for="item in titleList" :key="item" :label="item" :value="item" />
             </el-select>
@@ -34,7 +34,7 @@
 
         <!-- 公司行业 -->
         <el-form-item label="公司行业">
-            <el-select v-model="localFilters.industry" multiple placeholder="公司行业" style="width: 270px;"
+            <el-select v-model="localFilters.industry" multiple placeholder="公司行业" style="width: 220px;"
                 @change="val => handleSelectChange('industry', val)">
                 <el-option v-for="item in industryList" :key="item" :label="item" :value="item" />
             </el-select>
@@ -42,7 +42,7 @@
 
         <!-- 公司规模 -->
         <el-form-item label="公司规模">
-            <el-select v-model="localFilters.scale" multiple placeholder="公司规模" style="width: 270px;"
+            <el-select v-model="localFilters.scale" multiple placeholder="公司规模" style="width: 220px;"
                 @change="val => handleSelectChange('scale', val)">
                 <el-option v-for="item in scaleList" :key="item" :label="item" :value="item" />
             </el-select>
@@ -50,7 +50,7 @@
 
         <!-- 融资阶段 -->
         <el-form-item label="融资阶段">
-            <el-select v-model="localFilters.stage" multiple placeholder="融资阶段" style="width: 270px;"
+            <el-select v-model="localFilters.stage" multiple placeholder="融资阶段" style="width: 220px;"
                 @change="val => handleSelectChange('stage', val)">
                 <el-option v-for="item in stageList" :key="item" :label="item" :value="item" />
             </el-select>
@@ -102,9 +102,13 @@ export default {
         };
     },
     mounted() {
-        this.fetchCityList();
-        this.fetchIndustryList();
-        this.fetchTitleList();
+        try {
+            this.fetchCityList();
+            this.fetchIndustryList();
+            this.fetchTitleList();
+        } catch (error) {
+            console.error('fetchList error:', error);
+        }
     },
     methods: {
         async fetchCityList() {
