@@ -2,14 +2,18 @@ package com.jobagent.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.jobagent.dto.DeleteJobDTO;
+import com.jobagent.dto.InsertJobsDTO;
 import com.jobagent.dto.JobPageDTO;
+import com.jobagent.dto.JobViewDTO;
 import com.jobagent.entity.Job;
+import com.jobagent.entity.JobInfo;
 import com.jobagent.mapper.JobMapper;
 import com.jobagent.service.JobService;
 import com.jobagent.vo.PageResult;
-import com.jobagent.vo.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -58,5 +62,40 @@ public class JobServiceImpl implements JobService {
     @Override
     public List<String> titleListAll() {
         return jobMapper.titleListAll();
+    }
+
+    @Override
+    @Transactional
+    public void deleteByIds(DeleteJobDTO deleteJobDTO) {
+        jobMapper.deleteUserJobByIds(deleteJobDTO);
+        jobMapper.deleteJobByIds(deleteJobDTO);
+    }
+
+    @Override
+    public void setViewStatus(JobViewDTO jobViewDTO) {
+        jobMapper.setViewStatus(jobViewDTO);
+    }
+
+    @Override
+    @Transactional
+    public String insertJobs(InsertJobsDTO insertJobsDTO) {
+        int total=0, insertNum=0;
+        for (JobInfo job : insertJobsDTO.getJobs()) {
+            Integer jobId = jobMapper.selectJobIdIfExists(job);
+            total++;
+            if (jobId == null) {
+                // 不存在，插入
+                jobMapper.insertJob(job);
+                insertNum++;
+                jobId = job.getJobId(); // 主键已回填
+            }
+
+            // 先插入公司
+            jobMapper.insertCompanyIfNotExists(job);
+
+            // 插入用户与岗位关联
+            jobMapper.insertUserJobIfNotExists(insertJobsDTO.getUserId(), jobId);
+        }
+        return "成功插入" + insertNum + "条数据，其中有" + (total-insertNum) + "条重复数据";
     }
 }

@@ -143,8 +143,8 @@ def init_job_table(tables):
         logger.info('创建 job 表')
         db_pool.execute('''
             CREATE TABLE job (
-                securityId VARCHAR(200) NOT NULL COMMENT '职位id',
-                lid VARCHAR(50) NOT NULL COMMENT '职位lid',
+                id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, -- 自增主键，方便关联
+                securityId VARCHAR(200) NOT NULL COMMENT '职位id' UNIQUE,
                 jobName VARCHAR(100) NOT NULL COMMENT '职位名称',
                 jobType VARCHAR(20) NOT NULL COMMENT '职位性质',
                 companyId VARCHAR(50) NOT NULL COMMENT '公司id',
@@ -161,13 +161,47 @@ def init_job_table(tables):
                 title VARCHAR(30) COMMENT '职位类型',    
                 skills VARCHAR(300) COMMENT '工作技能需求标签',
                 description TEXT COMMENT '职位描述',
-                PRIMARY KEY (lid),
+                UNIQUE KEY unique_job (jobName, city, companyId)
                 FOREIGN KEY (companyId) REFERENCES company(id)
             )'''
         )
     else:
         logger.info('job 表已存在')
         
+def init_search_job_table(tables):
+    if'search_job' not in tables:
+        logger.info('创建 search_job 表')
+        db_pool.execute('''
+            CREATE TABLE search_job (
+                id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                userId VARCHAR(50) NOT NULL COMMENT '用户id',
+                securityId VARCHAR(200) NOT NULL COMMENT '职位id' UNIQUE,
+                jobName VARCHAR(100) NOT NULL COMMENT '职位名称',
+                jobType VARCHAR(20) NOT NULL COMMENT '职位性质',
+                companyId VARCHAR(50) NOT NULL COMMENT '公司id',
+                url VARCHAR(500) COMMENT '职位链接',
+                salary VARCHAR(40) COMMENT '薪水',
+                salaryFloor INTEGER COMMENT '最低薪水',
+                salaryCeiling INTEGER COMMENT '最高薪水',
+                crawlDate DATE COMMENT '获取职位时的日期',
+                city VARCHAR(20) NOT NULL COMMENT '城市',
+                region VARCHAR(20) COMMENT '城市区域',
+                experience VARCHAR(20) COMMENT '工作经验要求',
+                degree VARCHAR(20) COMMENT '学历要求',
+                industry VARCHAR(20) COMMENT '行业',
+                title VARCHAR(30) COMMENT '职位类型',    
+                skills VARCHAR(300) COMMENT '工作技能需求标签',
+                description TEXT COMMENT '职位描述',
+                companyName VARCHAR(100) NOT NULL COMMENT '公司名称',
+                stage VARCHAR(20) COMMENT '公司融资阶段',
+                scale VARCHAR(30) COMMENT '公司人员规模',
+                welfare VARCHAR(200) COMMENT '公司福利',
+                UNIQUE KEY unique_job (jobName, city, companyId)
+            )'''
+        )
+    else:
+        logger.info('job 表已存在')
+
 def init_other_tables(tables):
     if 'user' not in tables:
         logger.info('创建 user 表')
@@ -197,15 +231,41 @@ def init_other_tables(tables):
             CREATE TABLE user_job (
                 id INT NOT NULL AUTO_INCREMENT,
                 user_id INT NOT NULL,
-                job_lid VARCHAR(50) NOT NULL,
+                job_id BIGINT NOT NULL,
+                viewed BOOLEAN NOT NULL DEFAULT 0,
                 sent_cv BOOLEAN NOT NULL DEFAULT 0,
+                UNIQUE KEY unique_user_job (user_id, job_id),
                 PRIMARY KEY (id),
                 FOREIGN KEY (user_id) REFERENCES user(id),
-                FOREIGN KEY (job_lid) REFERENCES job(lid)
+                FOREIGN KEY (job_id) REFERENCES job(id)
             )'''
         )
     else:
         logger.info('user_job 表已存在')
+        
+    if 'user_rule' not in tables:
+        logger.info('创建 user_rule 表')
+        db_pool.execute('''
+            CREATE TABLE user_rule (
+                id INT NOT NULL AUTO_INCREMENT,
+                rule_name VARCHAR(50) NOT NULL UNIQUE,
+                rule_description TEXT,
+                user_id INT NOT NULL,
+                keyword VARCHAR(300),
+                city VARCHAR(300),
+                degree VARCHAR(300),
+                industry VARCHAR(300),
+                title VARCHAR(300),
+                experience VARCHAR(300),
+                scale VARCHAR(300),
+                stage VARCHAR(300),
+                limit_num INTEGER,
+                PRIMARY KEY (id),
+                FOREIGN KEY (user_id) REFERENCES user(id)
+            )
+        ''')
+    else:
+        logger.info('user_rule 表已存在')
 
 def create_tables():
     databases = db_pool.execute("SHOW DATABASES")

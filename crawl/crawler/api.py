@@ -1,9 +1,8 @@
 from crawler.requestHelper import Request
 from crawler.query import JobQuery
-from database.job import Job
-from database.company import Company
-from database.connector import redis_connector
-from utils.tools import generate_random_id, get_user_id
+from database.jobinfo import InsertDTO, JobInfo
+from utils.tools import get_user_id
+from typing import List
 from loguru import logger
 import datetime
 import time
@@ -24,27 +23,15 @@ def get_job_detail(securityId):
     else:
         return None
     
-def save_job_to_db(title: str, js: dict) -> Job:
-    if Job.from_db(js["lid"]):
-        logger.warning(f"岗位已存在，lid: {js['lid']}.")
-        return None
-    
-    job = Job()
-    job.securityId_(js["securityId"]).lid_(js["lid"]).jobName_(js["jobName"]).jobType_(js["jobType"]).salary_(js["salaryDesc"])\
+def convert_json_to_job(title: str, js: dict) -> JobInfo:
+    jobinfo = JobInfo()
+    jobinfo.securityId_(js["securityId"]).jobName_(js["jobName"]).jobType_(js["jobType"]).salary_(js["salaryDesc"])\
         .crawlDate_(datetime.datetime.now().strftime("%Y-%m-%d")).city_(js["cityName"]).region_(js["areaDistrict"]).experience_(js["jobExperience"])\
-        .degree_(js["jobDegree"]).industry_(js["brandIndustry"]).title_(title).skills_(','.join(js["skills"]))
-        
-    companyId = js["encryptBrandId"]
-    if not companyId:
-        companyId = generate_random_id(28)
-    job.companyId_(companyId)
+        .degree_(js["jobDegree"]).industry_(js["brandIndustry"]).title_(title).skills_(','.join(js["skills"])).companyId_(js["encryptBrandId"])\
+        .companyName_(js["brandName"]).stage_(js["brandStageName"]).scale_(js["brandScaleName"]).welfare_(','.join(js["welfareList"]))\
+        .url_(f'https://www.zhipin.com/job_detail/{js["encryptJobId"]}.html')
     
-    company = Company()
-    company.id_(companyId).name_(js["brandName"]).stage_(js["brandStageName"]).scale_(js["brandScaleName"]).welfare_(','.join(js["welfareList"]))
-    company.commit_to_db()
-    
-    job.url_(f'https://www.zhipin.com/job_detail/{js["encryptJobId"]}.html')
-    salary = job.salary
+    salary = jobinfo.salary
     try:
         if '面议' in salary:      # 计算不准确薪资，跳过
             salary = '薪资面议'
@@ -75,21 +62,20 @@ def save_job_to_db(title: str, js: dict) -> Job:
         salaryFloor = 0
         salaryCeiling = 0
         
-    job.salaryCeiling_(int(salaryCeiling)).salaryFloor_(int(salaryFloor))
-    job.commit_to_db()
-    logger.success(f"岗位信息保存成功 ==> {title} | {job.jobName} | {job.city} | {company.name}")
-    
-    return job
+    jobinfo.salaryCeiling_(int(salaryCeiling)).salaryFloor_(int(salaryFloor))
+    logger.info(f"{jobinfo.title} | {jobinfo.jobName} | {jobinfo.city} | {jobinfo.companyName}")
+    return jobinfo
     
 
-def get_job_list(query: JobQuery, user_id: str=None):
+def get_job_list(query: JobQuery, job_status=None, user_id: str=None, token: str=None) -> InsertDTO:
     url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
     num = 0
+    jobInfoList: List[JobInfo] = []
     while True:
-        status = int(redis_connector.hget(user_id, "running").decode())
+        status = job_status.get(user_id, {}).get('running', 1)
         if status == 0:
             print("停止运行")
-            return
+            return InsertDTO(user_id, jobInfoList, token)
         params = {
             "page": 1,
             "pageSize": "30",       # 最大是30
@@ -115,19 +101,20 @@ def get_job_list(query: JobQuery, user_id: str=None):
             zpData = data["zpData"]
             jobList = zpData["jobList"]
             for job in jobList:
-                save_job_to_db(query.title, job)
+                jobinfo = convert_json_to_job(query.title, job)
+                jobInfoList.append(jobinfo)
                 num += 1
                 if num >= query.limit:
-                    return
+                    return InsertDTO(user_id, jobInfoList, token)
             if zpData["hasMore"] == False:
                 break
             else:
                 params["page"] += 1
         else:
             break
-        status = int(redis_connector.hget(user_id, "running").decode())
+        status = job_status.get(user_id, {}).get('running', 1)
         if status == 0:
             print("停止运行")
-            return
+            return InsertDTO(user_id, jobInfoList, token)
         time.sleep(3)
-        
+    return InsertDTO(user_id, jobInfoList, token)

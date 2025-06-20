@@ -8,7 +8,11 @@ EXPERIENCE = {x["name"]: x["code"] for x in code_json["experienceList"]}
 SCALE = {x["name"]: x["code"] for x in code_json["scaleList"]}
 STAGE = {x["name"]: x["code"] for x in code_json["stageList"]}
 JOBTYPE = {x["name"]: x["code"] for x in code_json["jobTypeList"]}
+ALREADY_RUN_CODE = 410
 
 WAIT_FOR_LOAD = "networkidle"
 USER_ID_NAME = "USER_ID"
 DEFAULT_USER_ID = "1"
+
+INSERT_URL = "http://localhost:8081/job/insert"
+LOGIN_URL = "http://localhost:8081/login"

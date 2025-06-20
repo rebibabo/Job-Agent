@@ -2,4 +2,3 @@ DBUtils
 pymysql
 pyyaml
 flask
-redis

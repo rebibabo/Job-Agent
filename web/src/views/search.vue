@@ -44,7 +44,16 @@ export default {
             console.log(this.$store.state.user.userInfo.id)
             // 假设启动任务接口
             this.status = null;
-            axios.post('/search/joblist/start', { userId: this.$store.state.user.userInfo.id })
+            const params = {userId: this.$store.state.user.userInfo.id};
+            for (const key in this.filters) {
+                const value = this.filters[key];
+                if (Array.isArray(value) && value.length === 1 && value[0] === '不限') {
+                    params[key] = [];
+                } else {
+                    params[key] = value;
+                }
+            }
+            axios.post('/search/joblist/start', params)
                 .then(() => {
                     this.progress = 0;
                     this.pollProgress();

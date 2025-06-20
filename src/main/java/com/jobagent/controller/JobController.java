@@ -1,6 +1,9 @@
 package com.jobagent.controller;
 
+import com.jobagent.dto.DeleteJobDTO;
+import com.jobagent.dto.InsertJobsDTO;
 import com.jobagent.dto.JobPageDTO;
+import com.jobagent.dto.JobViewDTO;
 import com.jobagent.service.JobService;
 import com.jobagent.vo.PageResult;
 import com.jobagent.vo.Result;
@@ -11,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/job")
@@ -68,6 +72,27 @@ public class JobController {
     public Result<List<String>> titleListAll(){
         log.info("查询数据库中的岗位");
         return Result.success(jobService.titleListAll());
+    }
+
+    @PostMapping("/delete")
+    public Result deleteJobs(@RequestBody DeleteJobDTO deleteJobDTO) {
+        log.info("删除岗位: {}", deleteJobDTO);
+        jobService.deleteByIds(deleteJobDTO);
+        return Result.success();
+    }
+
+    @PostMapping("/view")
+    public Result setViewStatus(@RequestBody JobViewDTO jobViewDTO) {
+        log.info("设置已查看状态: {}", jobViewDTO);
+        jobService.setViewStatus(jobViewDTO);
+        return Result.success();
+    }
+
+    @PostMapping("/insert")
+    public Result insertJobs(@RequestBody InsertJobsDTO insertJobsDTO) {
+        log.info("新增岗位: {}", insertJobsDTO);
+        String message = jobService.insertJobs(insertJobsDTO);
+        return Result.success(message);
     }
 
 }

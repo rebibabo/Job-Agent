@@ -11,6 +11,8 @@ import java.util.List;
 @Data
 @ApiModel("分页查询职位接口参数")
 public class JobPageDTO {
+    @ApiModelProperty(value = "用户id", example = "1")
+    private String userId = "";
 
     @ApiModelProperty(value = "搜索关键词", example = "Java")
     private String keyword = "";

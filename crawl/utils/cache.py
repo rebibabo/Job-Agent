@@ -2,6 +2,7 @@ import itertools
 import json
 import os
 from loguru import logger
+import datetime
 
 class CachedIterator:
     def __init__(self, arrays, cache_path=None):
@@ -46,6 +47,7 @@ class CachedIterator:
             cache_data = {
                 "index": self.index,
                 "total": self.total,
+                "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "array_indices": self.array_indices
             }
             with open(self.cache_path, 'w', encoding='utf-8') as f:

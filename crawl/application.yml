@@ -10,3 +10,7 @@ database:
 crawler:
   retry-num: 3
   set-token: False
+
+user:
+  username: admin
+  password: "123456"

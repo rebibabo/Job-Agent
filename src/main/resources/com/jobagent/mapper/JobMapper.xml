@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.jobagent.mapper.JobMapper">
     <select id="pageQuery" resultType="com.jobagent.entity.Job">
-        SELECT j.*, c.* FROM job j, company c
+        SELECT j.*, c.name companyName, c.scale, c.stage, c.welfare, sent_cv, viewed FROM job j, company c, user_job u
         <where>
             <!-- 关键词搜索（标题或描述） -->
             <if test="jobPageDTO.keyword != null and jobPageDTO.keyword != ''">
@@ -64,6 +64,101 @@
             </if>
 
             AND j.companyId = c.id
+            AND u.user_id = #{jobPageDTO.userId}
+            AND u.job_id = j.id
         </where>
     </select>
+
+    <delete id="deleteUserJobByIds" parameterType="com.jobagent.dto.DeleteJobDTO">
+        DELETE FROM user_job
+        WHERE user_id = #{deleteJobDTO.user_id}
+        AND job_id IN
+        <foreach collection="deleteJobDTO.job_ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteJobByIds" parameterType="com.jobagent.dto.DeleteJobDTO">
+        DELETE FROM job
+        WHERE id IN
+        <foreach collection="deleteJobDTO.job_ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectJobIdIfExists" parameterType="com.jobagent.entity.JobInfo" resultType="Integer">
+        SELECT id
+        FROM job
+        WHERE city = #{city}
+          AND companyId = #{companyId}
+          AND jobName = #{jobName}
+    </select>
+
+    <insert id="insertJob" parameterType="com.jobagent.entity.JobInfo" useGeneratedKeys="true" keyProperty="jobId">
+        INSERT INTO job (
+            securityId,
+            jobName,
+            jobType,
+            companyId,
+            url,
+            salary,
+            salaryFloor,
+            salaryCeiling,
+            crawlDate,
+            city,
+            region,
+            experience,
+            degree,
+            industry,
+            title,
+            skills,
+            description
+        ) VALUES (
+             #{securityId},
+             #{jobName},
+             #{jobType},
+             #{companyId},
+             #{url},
+             #{salary},
+             #{salaryFloor},
+             #{salaryCeiling},
+             #{crawlDate},
+             #{city},
+             #{region},
+             #{experience},
+             #{degree},
+             #{industry},
+             #{title},
+             #{skills},
+             #{description}
+         )
+    </insert>
+
+    <insert id="insertCompanyIfNotExists" parameterType="com.jobagent.entity.JobInfo">
+        INSERT INTO company (id, name, stage, scale, welfare)
+        SELECT
+            #{companyId},
+            #{companyName},
+            #{stage},
+            #{scale},
+            #{welfare}
+            WHERE NOT EXISTS (
+                SELECT 1 FROM company WHERE id = #{companyId}
+            )
+    </insert>
+
+    <insert id="insertUserJobIfNotExists" parameterType="map">
+        INSERT INTO user_job (user_id, job_id, viewed, sent_cv)
+        SELECT
+            #{userId},
+            #{jobId},
+            0,
+            0
+            WHERE NOT EXISTS (
+                SELECT 1 FROM user_job WHERE user_id = #{userId} AND job_id = #{jobId}
+            )
+    </insert>
+
+
+
 </mapper>

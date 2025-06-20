@@ -14,7 +14,6 @@ export const titleListAPI = () => {
 }
 
 export const jobListAPI = (params) => {
-    console.log(params)
     return request.post('/api/job/page', params)
 }
 
@@ -28,4 +27,12 @@ export const industryListAllAPI = () => {
 
 export const titleListAllAPI = () => {
     return request.get('/api/job/titleAll')
+}
+
+export const deleteAPI = (params) => {
+    return request.post('/api/job/delete', params)
+}
+
+export const setViewStatusAPI = (params) => {
+    return request.post('/api/job/view', params)
 }

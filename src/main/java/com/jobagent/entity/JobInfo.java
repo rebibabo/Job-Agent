@@ -1,17 +1,11 @@
 package com.jobagent.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class Job {
+public class JobInfo {
     private String securityId;
-    private String id;
+    private Integer jobId;   //回填，插入job会自动生成主键id
     private String jobName;
     private String jobType;
     private String companyId;
@@ -32,7 +26,4 @@ public class Job {
     private String scale;
     private String stage;
     private String welfare;
-    private Boolean viewed;
-    private Boolean sentCv;
 }
-

@@ -44,7 +44,7 @@ def login(browser, cache_dir):
     
     
 class TokenFetcher:
-    userId = get_user_id()
+    userId: str
     
     def __init__(self):
         self.playwright = sync_playwright().start()  # 手动启动，不自动关闭
@@ -68,6 +68,6 @@ class TokenFetcher:
         self.playwright.stop()
 
 if __name__ == '__main__':       
-    fetcher = TokenFetcher("1")
+    fetcher = TokenFetcher()
     print(fetcher.get_token())
     print(fetcher.get_token())

@@ -28,7 +28,7 @@
 6-18
 前端:
 1. 岗位表单自动加载，实现分页查询
-2. 新建岗位过滤组件和可排序echart图表组件，在前端渲染图表
+2. 新建岗位过滤组件和可排序·echart图表组件，在前端渲染图表
 
 后端：
 1. 优化查询sql，将原始job left join company修改为了where子句中的拼接，将查询时间从30s降低至0.5s
@@ -52,3 +52,23 @@
 爬虫:
 1. 新增爬虫的flask后端api，输入查询条件以及user_id，获取岗位信息，缓存信息改为存放在cache/user_id目录下
 2. 新增redis数据库，存放进度条状态信息，不同进程通过redis共享变量
+
+
+6-20
+前端:
+1. 岗位查询新增删除、批量删除功能，并能显示已查看、已投递
+2. 岗位查询添加保存过滤规则会话框和加载规则会话框
+
+后端:
+1. 删除job表的lid，新增id主键和(city, companyId, jobName)唯一约束条件
+2. 新增批量删除岗位的功能，同时删除user_job中的内容，job新增sent_cv和viewed属性
+3. jobPageDTO新增user_id属性，job/page根据user_id只返回该用户查询的岗位信息
+4. 新增批量添加岗位的接口，先判断企业是否存在，不存在就插入company，再判断job是否重复，没有则插入job，并得到jobId，再判断(userId,jobId)是否重复，没有则插入user_job
+5. 新增user_rule表，新增规则的增删查接口
+
+爬虫:
+1. 将原始本地提交岗位信息修改为post /job/insert
+2. 不用redis了，使用manager实现进程间的通信
+
+TODO:
+新增temp table，用来暂存爬取到的数据，数据包含company和job的全部字段，以及user_id，前端查询界面user_id查询的temp table中的值

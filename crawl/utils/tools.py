@@ -1,10 +1,14 @@
-import redis
-from database.connector import redis_connector
 from constant import *
 import hashlib
 import random
 import string
 import os
+
+def get_param_hash(*args):
+    m = hashlib.md5()
+    s = json.dumps(args, ensure_ascii=False, sort_keys=True)
+    m.update(s.encode('utf-8'))
+    return m.hexdigest()
 
 def md5_encrypt(text):
     """对字符串进行MD5加密"""
