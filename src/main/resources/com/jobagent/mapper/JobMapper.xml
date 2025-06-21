@@ -148,12 +148,13 @@
     </insert>
 
     <insert id="insertUserJobIfNotExists" parameterType="map">
-        INSERT INTO user_job (user_id, job_id, viewed, sent_cv)
+        INSERT INTO user_job (user_id, job_id, viewed, sent_cv, filter_hash)
         SELECT
             #{userId},
             #{jobId},
             0,
-            0
+            0,
+            #{filterHash}
             WHERE NOT EXISTS (
                 SELECT 1 FROM user_job WHERE user_id = #{userId} AND job_id = #{jobId}
             )

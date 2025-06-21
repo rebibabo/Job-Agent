@@ -1,9 +1,6 @@
 package com.jobagent.service;
 
-import com.jobagent.dto.DeleteJobDTO;
-import com.jobagent.dto.InsertJobsDTO;
-import com.jobagent.dto.JobPageDTO;
-import com.jobagent.dto.JobViewDTO;
+import com.jobagent.dto.*;
 import com.jobagent.vo.PageResult;
 import com.jobagent.vo.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +11,8 @@ import java.util.List;
 @Service
 public interface JobService {
     PageResult page(JobPageDTO jobPageDTO);
+
+    PageResult pageFilter(JobPageFilterDTO jobPageFilterDTO);
 
     List<String> cityList();
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from utils.tools import builder        
+from utils.tools import builder, md5_encrypt 
 from typing import List
 from constant import INSERT_URL, LOGIN_URL
 from utils.configLoader import inject_config
@@ -46,21 +46,23 @@ class JobInfo:
 class InsertDTO:
     token: str
     
-    def __init__(self, userId: str, jobs: List[JobInfo], token: str=None):
+    def __init__(self, userId: str, jobs: List[JobInfo], filterHash: str, token: str=None):
         self.userId = userId
         self.jobs = jobs
+        self.filterHash = filterHash or ""
         if token:
             InsertDTO.token = token
         else:
             self.get_token()
             
     def get_token(self):
-        response = requests.post(LOGIN_URL, json={"username": self.config["username"], "password": self.config["password"]})
+        response = requests.post(LOGIN_URL, json={"username": self.config["username"], "password": md5_encrypt(self.config["password"])})
         InsertDTO.token = response.json()["data"]["token"]
             
     def commit_to_db(self):
         params = {
             "userId": self.userId,
+            "filterHash": self.filterHash,
             "jobs": [job.to_dict() for job in self.jobs],
         }
         headers = {

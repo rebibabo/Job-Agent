@@ -67,15 +67,16 @@ def convert_json_to_job(title: str, js: dict) -> JobInfo:
     return jobinfo
     
 
-def get_job_list(query: JobQuery, job_status=None, user_id: str=None, token: str=None) -> InsertDTO:
+def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None) -> InsertDTO:
     url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
     num = 0
     jobInfoList: List[JobInfo] = []
     while True:
-        status = job_status.get(user_id, {}).get('running', 1)
-        if status == 0:
-            print("停止运行")
-            return InsertDTO(user_id, jobInfoList, token)
+        if job_status:
+            status = job_status.get(user_id, {}).get('running', 1)
+            if status == 0:
+                print("停止运行")
+                return InsertDTO(user_id, jobInfoList, filter_hash, token)
         params = {
             "page": 1,
             "pageSize": "30",       # 最大是30
@@ -105,16 +106,17 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, token: str
                 jobInfoList.append(jobinfo)
                 num += 1
                 if num >= query.limit:
-                    return InsertDTO(user_id, jobInfoList, token)
+                    return InsertDTO(user_id, jobInfoList, filter_hash, token)
             if zpData["hasMore"] == False:
                 break
             else:
                 params["page"] += 1
         else:
             break
-        status = job_status.get(user_id, {}).get('running', 1)
-        if status == 0:
-            print("停止运行")
-            return InsertDTO(user_id, jobInfoList, token)
+        if job_status:
+            status = job_status.get(user_id, {}).get('running', 1)
+            if status == 0:
+                print("停止运行")
+                return InsertDTO(user_id, jobInfoList, filter_hash, token)
         time.sleep(3)
-    return InsertDTO(user_id, jobInfoList, token)
+    return InsertDTO(user_id, jobInfoList, filter_hash, token)

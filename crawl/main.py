@@ -54,11 +54,11 @@ def run_crawler(data, job_status):
     keyword = data.get('keyword', '')
     scale = data.get('scale', [])
     stage = data.get('stage', [])
+    filterHash = data.get('filterHash', '')
     
-    h = get_param_hash(industry, jobType, titles, experience, degree, salary, limit, keyword, scale, stage)
     os.environ[USER_ID_NAME] = user_id
     TokenFetcher.userId = user_id
-    cache_path = f'cache/{user_id}/crawl_{h}.json'
+    cache_path = f'cache/{user_id}/crawl_{filterHash}.json'
     iterator = CachedIterator([cities, titles], cache_path)
     progress = iterator.index / iterator.total * 100
     job_status[user_id] = {     # 需要完整赋值，job_status[user_id]['percentage']是不会进程共享的
@@ -80,7 +80,7 @@ def run_crawler(data, job_status):
             scale=scale,
             stage=stage
         )
-        insertDTO = get_job_list(query, job_status, user_id)
+        insertDTO = get_job_list(query, job_status, user_id, filterHash)
         insertDTO.commit_to_db()
         progress = iterator.index / iterator.total * 100
         job_status[user_id] = {

@@ -39,6 +39,11 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        String requestURI = request.getRequestURI();
+        if (requestURI.startsWith("/register") || requestURI.startsWith("/login")) {
+            return true; // 放行注册和登录请求
+        }
+
         //1、从请求头中获取令牌
         String token = request.getHeader(jwtProperties.getAdminTokenName());
 

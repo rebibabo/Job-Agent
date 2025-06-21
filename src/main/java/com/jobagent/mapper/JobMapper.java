@@ -53,6 +53,10 @@ public interface JobMapper {
     int insertJob(JobInfo job);
 
     // 插入用户-岗位关联，避免重复
-    int insertUserJobIfNotExists(@Param("userId") String userId, @Param("jobId") Integer jobId);
+    int insertUserJobIfNotExists(@Param("userId") String userId, @Param("jobId") Integer jobId, @Param("filterHash") String filterHash);
+
+    // 根据过滤规则哈希值和用户id过滤出爬取的数据
+    @Select("select j.*, c.*, u.* from job j, company c, user_job u where user_id=#{jobPageFilterDTO.userId} and filter_hash=#{jobPageFilterDTO.filterHash} and j.id=u.job_id and c.id=j.companyId")
+    Page<Job> pageQueryFilter(@Param("jobPageFilterDTO") JobPageFilterDTO jobPageFilterDTO);
 
 }

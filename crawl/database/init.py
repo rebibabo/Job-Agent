@@ -234,6 +234,7 @@ def init_other_tables(tables):
                 job_id BIGINT NOT NULL,
                 viewed BOOLEAN NOT NULL DEFAULT 0,
                 sent_cv BOOLEAN NOT NULL DEFAULT 0,
+                filter_hash VARCHAR(50) NOT NULL,
                 UNIQUE KEY unique_user_job (user_id, job_id),
                 PRIMARY KEY (id),
                 FOREIGN KEY (user_id) REFERENCES user(id),

@@ -73,7 +73,7 @@ const router = new Router({
 // 全局前置守卫：基于路径的自动鉴权
 router.beforeEach((to, from, next) => {
     const token = store.state.user.token
-    const publicPaths = ['/login', '/404'] // 公开路径白名单
+    const publicPaths = ['/login', '/404', '/register'] // 公开路径白名单
     const isPublicPath = publicPaths.includes(to.path) || to.path.startsWith('/public') // 扩展规则
 
     // 如果目标路径是公开的，直接放行

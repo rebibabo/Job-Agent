@@ -2,10 +2,7 @@ package com.jobagent.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-import com.jobagent.dto.DeleteJobDTO;
-import com.jobagent.dto.InsertJobsDTO;
-import com.jobagent.dto.JobPageDTO;
-import com.jobagent.dto.JobViewDTO;
+import com.jobagent.dto.*;
 import com.jobagent.entity.Job;
 import com.jobagent.entity.JobInfo;
 import com.jobagent.mapper.JobMapper;
@@ -26,6 +23,18 @@ public class JobServiceImpl implements JobService {
         int pageNo = jobPageDTO.getPage(),  pageSize = jobPageDTO.getPageSize();
         PageHelper.startPage(pageNo, pageSize);
         Page<Job> page = jobMapper.pageQuery(jobPageDTO);
+
+        long total = page.getTotal();
+        List<Job> records = page.getResult();
+        PageResult pageResult = new PageResult(total, records);
+        pageResult._hasNext(pageNo, pageSize);
+        return pageResult;
+    }
+
+    public PageResult pageFilter(JobPageFilterDTO jobPageFilterDTO){
+        int pageNo = jobPageFilterDTO.getPage(),  pageSize = jobPageFilterDTO.getPageSize();
+        PageHelper.startPage(pageNo, pageSize);
+        Page<Job> page = jobMapper.pageQueryFilter(jobPageFilterDTO);
 
         long total = page.getTotal();
         List<Job> records = page.getResult();
@@ -92,9 +101,9 @@ public class JobServiceImpl implements JobService {
 
             // 先插入公司
             jobMapper.insertCompanyIfNotExists(job);
-
+            String filterHash = insertJobsDTO.getFilterHash();
             // 插入用户与岗位关联
-            jobMapper.insertUserJobIfNotExists(insertJobsDTO.getUserId(), jobId);
+            jobMapper.insertUserJobIfNotExists(insertJobsDTO.getUserId(), jobId, filterHash);
         }
         return "成功插入" + insertNum + "条数据，其中有" + (total-insertNum) + "条重复数据";
     }

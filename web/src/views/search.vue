@@ -21,6 +21,7 @@
 <script>
 import axios from 'axios';
 import SearchFilter from "@/components/SearchFilter.vue";
+import { getFiltersMD5 } from "@/utils/encrypt";
 
 export default {
     name: 'JobSearch',
@@ -53,6 +54,7 @@ export default {
                     params[key] = value;
                 }
             }
+            params.filterHash = getFiltersMD5(params);
             axios.post('/search/joblist/start', params)
                 .then(() => {
                     this.progress = 0;

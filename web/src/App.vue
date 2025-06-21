@@ -36,6 +36,26 @@
                     </div>
                 </el-header>
 
+                <!-- 个人中心弹窗 -->
+                <el-dialog title="个人中心" :visible.sync="dialogVisible" width="400px">
+                    <el-form :model="userInfo" label-width="80px">
+                        <el-form-item label="用户名">
+                            <el-input v-model="userInfo.userName" placeholder="请输入新的用户名" style="width: 260px;"/>
+                        </el-form-item>
+                        <el-form-item label="旧密码">
+                            <el-input type="password" v-model="userInfo.oldPassword" placeholder="请输入原始密码"  style="width: 260px;"/>
+                        </el-form-item>
+                        <el-form-item label="新密码">
+                            <el-input type="password" v-model="userInfo.newPassword" placeholder="请输入新的密码"  style="width: 260px;"/>
+                        </el-form-item>
+                    </el-form>
+
+                    <template #footer>
+                        <el-button @click="dialogVisible = false">取消</el-button>
+                        <el-button type="primary" @click="submitRule">提交</el-button>
+                    </template>
+                </el-dialog>
+
                 <!-- 页面主要内容 -->
                 <el-main>
                     <router-view />
@@ -47,13 +67,22 @@
   
 <script>
 import Sidebar from './components/Sidebar.vue'
+import { changePasswordAPI } from '@/api/auth'
+import { getMD5LowerCase } from '@/utils/encrypt'
 
 export default {
     name: 'App',
     components: { Sidebar },
     data() {
         return {
-            isCollapse: false
+            isCollapse: false,
+            dialogVisible: false,
+            userInfo: {
+                userId: this.$store.state.user.userInfo.id,
+                userName: this.$store.state.user.userInfo.userName,
+                oldPassword: '',
+                newPassword: ''
+            }
         }
     },
     methods: {
@@ -66,6 +95,8 @@ export default {
                 this.logout();
             } else if (command === 'profile') {
                 console.log("进入个人中心");
+                console.log(this.userInfo)
+                this.dialogVisible = true;
             }
         },
         logout() {
@@ -82,6 +113,37 @@ export default {
             .catch(() => {
                 console.log("用户取消退出登录")
             })
+        },
+        submitRule() {
+            if (this.userInfo.newPassword === '') {
+                this.$message.error('新密码不能为空');
+                return;
+            }
+            if (this.userInfo.oldPassword === '') {
+                this.$message.error('旧密码不能为空');
+                return;
+            }
+            if (this.userInfo.newPassword === this.userInfo.oldPassword) {
+                this.$message.error('新密码不能和旧密码相同');
+                return;
+            }
+            const params = {...this.userInfo}
+            params.oldPassword = getMD5LowerCase(params.oldPassword);
+            params.newPassword = getMD5LowerCase(params.newPassword);
+            changePasswordAPI(params).then(res => {
+                if (res.code === 1) {
+                    this.$message.success('修改密码成功，请重新登录');
+                    this.$store.dispatch('user/logout')
+                    this.$router.push('/login')
+                    this.dialogVisible = false;
+                } else {
+                    this.$message.error(res.msg);
+                }
+            }).catch(err => {
+                console.log(err)
+                this.$message.error(err.msg);
+            })
+            
         }
     }
 }

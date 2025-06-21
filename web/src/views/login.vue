@@ -33,21 +33,45 @@
                     </el-form-item>
                     <br>
 
-                    <el-form-item style="width: 100%">
-                        <el-button :loading="loading" class="login-btn" size="medium" type="primary" style="width: 100%"
+                    <el-form-item :inline="true" class="demo-form-inline" style="display: flex; flex-wrap: wrap; gap: 27px;">
+                        <el-button :loading="loading" class="login-btn" size="mini" type="primary" style="width: 100px"
                             @click.native.prevent="handleLogin">
                             <span v-if="!loading">登录</span>
                             <span v-else>登录中...</span>
+                        </el-button>
+
+                        <el-button :loading="loading" class="register-btn" size="mini" type="primary" style="width: 100px"
+                            @click.native.prevent="handleRegister">
+                            注册
                         </el-button>
                     </el-form-item>
 
                 </el-form>
             </div>
+
+            <!-- 注册账户弹窗 -->
+            <el-dialog title="注册账户" :visible.sync="dialogVisible" width="400px">
+                <el-form :model="userInfo" label-width="80px" :rules="loginRules">
+                    <el-form-item label="用户名">
+                        <el-input v-model="userInfo.username" placeholder="请输入新的用户名" style="width: 260px;"/>
+                    </el-form-item>
+                    <el-form-item label="密码">
+                        <el-input type="password" v-model="userInfo.password" placeholder="请输入密码"  style="width: 260px;"/>
+                    </el-form-item>
+                </el-form>
+
+                <template #footer>
+                    <el-button @click="dialogVisible = false">取消</el-button>
+                    <el-button type="primary" @click="submitRule">提交</el-button>
+                </template>
+            </el-dialog>
         </div>
     </div>
 </template>
   
 <script>
+import { userAddAPI } from '@/api/auth'
+import { getMD5LowerCase } from '@/utils/encrypt'
 
 export default {
     name: 'userLogin',
@@ -64,12 +88,17 @@ export default {
                 ],
                 password: [
                     { required: true, message: '请输入密码', trigger: 'blur' },
-                    { min: 6, max: 15, message: '长度在 6 到 15 个字符', trigger: 'blur' }
+                    { min: 5, max: 15, message: '长度在 5 到 15 个字符', trigger: 'blur' }
                 ]
+            },
+            userInfo: {
+                username: '',
+                password: ''
             },
             loading: false,
             passwordType: 'password',
-            redirect: undefined
+            redirect: undefined,
+            dialogVisible: false
         }
     },
     watch: {
@@ -92,12 +121,17 @@ export default {
                 if (valid) {
                     this.loading = true
                     // 这里替换为你的实际登录API调用
-                    this.$store.dispatch('user/login', this.loginForm)
+                    const params = {
+                        username: this.loginForm.username,
+                        password: getMD5LowerCase(this.loginForm.password)
+                    }
+                    this.$store.dispatch('user/login', params)
                         .then(() => {
                             this.$router.push({ path: this.redirect || '/' })
                             this.loading = false
                         })
                         .catch((error) => {
+                            console.log(error)
                             this.loading = false
                             this.$message.error(error.message);
                         })
@@ -106,7 +140,23 @@ export default {
                     return false
                 }
             })
-        }
+        },
+        handleRegister() {
+            this.dialogVisible = true
+        },
+        submitRule() {
+            const params = {
+                username: this.userInfo.username,
+                password: getMD5LowerCase(this.userInfo.password)
+            }
+            userAddAPI(params).then(() => {
+                this.$message.success('注册成功')
+                this.dialogVisible = false
+                this.$refs.loginForm.resetFields()
+            }).catch((error) => {
+                this.$message.error(error.msg)
+            })
+        },
     }
 }
 </script>
@@ -211,6 +261,24 @@ $light_gray: #eee;
         &:hover,
         &:focus {
             background-color: #ffc200;
+            color: #ffffff;
+        }
+    }
+
+    .register-btn {
+        border-radius: 17px;
+        padding: 11px 20px !important;
+        margin-top: 10px;
+        font-weight: 500;
+        font-size: 12px;
+        border: 0;
+        font-weight: 500;
+        color: #333333;
+        background-color: rgb(91, 143, 231);
+
+        &:hover,
+        &:focus {
+            background-color: rgb(91, 143, 231);
             color: #ffffff;
         }
     }

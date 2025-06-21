@@ -1,5 +1,7 @@
 package com.jobagent.controller;
 
+import com.jobagent.dto.UserAddDTO;
+import com.jobagent.dto.UserPasswordDTO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -54,5 +56,25 @@ public class UserController {
                 .build();
 
         return Result.success(employeeLoginVO);
+    }
+
+    @PostMapping("/userInfo/changePassword")
+    public Result<String> changePassword(@RequestBody UserPasswordDTO userPasswordDTO) {
+        log.info("修改用户密码:{}", userPasswordDTO);
+        Boolean result = userService.changePassword(userPasswordDTO);
+        if (result) {
+            return Result.success();
+        }
+        return Result.error("验证失败");
+    }
+
+    @PostMapping("/register")
+    public Result<String> addUser(@RequestBody UserAddDTO userAddDTO) {
+        log.info("添加用户:{}",  userAddDTO);
+        Boolean result = userService.addUser(userAddDTO);
+        if (result) {
+            return Result.success();
+        }
+        return Result.error("用户名已存在");
     }
 }

@@ -1,9 +1,6 @@
 package com.jobagent.controller;
 
-import com.jobagent.dto.DeleteJobDTO;
-import com.jobagent.dto.InsertJobsDTO;
-import com.jobagent.dto.JobPageDTO;
-import com.jobagent.dto.JobViewDTO;
+import com.jobagent.dto.*;
 import com.jobagent.service.JobService;
 import com.jobagent.vo.PageResult;
 import com.jobagent.vo.Result;
@@ -29,6 +26,14 @@ public class JobController {
     public Result<PageResult> page(@RequestBody JobPageDTO jobPageDTO){
         log.info("岗位分页查询，参数为：{}",  jobPageDTO);
         PageResult pageResult = jobService.page(jobPageDTO);
+        return Result.success(pageResult);
+    }
+
+    @PostMapping("/pageFilter")
+    @ApiOperation("分页查询岗位")
+    public Result<PageResult> page(@RequestBody JobPageFilterDTO jobPageFilterDTO){
+        log.info("岗位分页查询，参数为：{}",  jobPageFilterDTO);
+        PageResult pageResult = jobService.pageFilter(jobPageFilterDTO);
         return Result.success(pageResult);
     }
 
