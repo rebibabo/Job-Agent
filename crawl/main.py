@@ -55,8 +55,7 @@ def run_crawler(data, job_status):
     scale = data.get('scale', [])
     stage = data.get('stage', [])
     filterHash = data.get('filterHash', '')
-    
-    os.environ[USER_ID_NAME] = user_id
+        
     TokenFetcher.userId = user_id
     cache_path = f'cache/{user_id}/crawl_{filterHash}.json'
     iterator = CachedIterator([cities, titles], cache_path)
@@ -65,39 +64,49 @@ def run_crawler(data, job_status):
         'running': 1,
         'percentage': progress
     }
-    for city, title in iterator:
-        query = JobQuery(
-            userId=user_id,
-            city=city,
-            industry=industry,
-            jobType=jobType,
-            title=title,
-            experience=experience,
-            degree=degree,
-            salary=salary,
-            limit=limit,
-            keyword=keyword,
-            scale=scale,
-            stage=stage
-        )
-        insertDTO = get_job_list(query, job_status, user_id, filterHash)
-        insertDTO.commit_to_db()
-        progress = iterator.index / iterator.total * 100
-        job_status[user_id] = {
-            'running': 1,
-            'percentage': progress
-        }
-        status = job_status.get(user_id, {}).get('running', 1)
-        if status == 0:
-            print("终止循环")
-            return
+    
+    try:
+        for city, title in iterator:
+            query = JobQuery(
+                userId=user_id,
+                city=city,
+                industry=industry,
+                jobType=jobType,
+                title=title,
+                experience=experience,
+                degree=degree,
+                salary=salary,
+                limit=limit,
+                keyword=keyword,
+                scale=scale,
+                stage=stage
+            )
+            insertDTO = get_job_list(query, job_status, user_id, filterHash)
+            insertDTO.commit_to_db()
+            progress = iterator.index / iterator.total * 100
+            job_status[user_id] = {
+                'running': 1,
+                'percentage': progress
+            }
+            status = job_status.get(user_id, {}).get('running', 1)
+            if status == 0:
+                print("终止循环")
+                return
 
-        time.sleep(2)
+            time.sleep(2)
+            
+        job_status[user_id] = {
+            'running': 0,
+            'percentage': 100
+        }
+    except Exception as e:
+        print(e)
+        job_status[user_id] = {
+            'running': 0,
+            'percentage': -1,
+            'error': str(e)
+        }
         
-    job_status[user_id] = {
-        'running': 0,
-        'percentage': 100
-    }
 
 def create_app(job_status):
     @app.route('/joblist/start', methods=['POST'])
@@ -117,6 +126,11 @@ def create_app(job_status):
         
         user_id = str(data.get('userId', DEFAULT_USER_ID))
         state = job_status.get(user_id, {'percentage': 0})
+        if 'percentage' in state and state['percentage'] < 0:
+            return jsonify({
+                "percentage": -1,
+                "error": state.get('error', 'Unknown error')
+            })
         return jsonify({
             "percentage": round(state.get('percentage', 0), 1)
         })

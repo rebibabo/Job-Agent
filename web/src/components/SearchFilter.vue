@@ -308,6 +308,7 @@ export default {
             };
             this.loadRuleDialogVisible = false;
             this.$emit('change', { ...this.localFilters });
+            this.$emit('submit');
         },
         deleteRule(rule) {
             this.$confirm(`确定要删除规则 "${rule.ruleName}" 吗？`, '提示', {

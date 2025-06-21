@@ -15,6 +15,18 @@
 
             <el-progress :percentage="progress" :status="status"/>
         </el-form>
+
+        <JobTable
+            :jobList="jobList"
+            :currentPage="currentPage"
+            :pageSize="pageSize"
+            :totalNumber="totalNumber"
+            :maxHeight="700"
+            @update:currentPage="currentPage = $event"
+            @update:pageSize="pageSize = $event"
+            @pagination-change="fetchJobList"
+            ref="jobTableRef"
+        />
     </div>
 </template>
 
@@ -22,27 +34,45 @@
 import axios from 'axios';
 import SearchFilter from "@/components/SearchFilter.vue";
 import { getFiltersMD5 } from "@/utils/encrypt";
+import { jobListFilterAPI } from "@/api/job";
+import JobTable from "@/components/JobTable.vue";
 
 export default {
     name: 'JobSearch',
-    components: { SearchFilter },
+    components: { SearchFilter, JobTable },
     data() {
         return {
             progress: 0,
+            loading: false,
+            jobList: [],
             status: null,
             timer: null,
+            tableTimer: null,
             filters: {},
+            currentPage: 1,
+            pageSize: 40,
+            totalNumber: 0
         };
     },
     methods: {
         onSubmit() {
-            console.log(this.filters);
+            this.currentPage = 1;
+            this.fetchJobList();
         },
         onReset() {
             this.filters = {};
         },
         startJob() {
-            console.log(this.$store.state.user.userInfo.id)
+            // 清理可能残留的定时器
+            if (this.timer) {
+                clearInterval(this.timer);
+                this.timer = null;
+            }
+            if (this.tableTimer) {
+                clearInterval(this.tableTimer);
+                this.tableTimer = null;
+            }
+
             // 假设启动任务接口
             this.status = null;
             const params = {userId: this.$store.state.user.userInfo.id};
@@ -54,11 +84,12 @@ export default {
                     params[key] = value;
                 }
             }
-            params.filterHash = getFiltersMD5(params);
+            params.filterHash = getFiltersMD5(this.filters);
             axios.post('/search/joblist/start', params)
                 .then(() => {
                     this.progress = 0;
                     this.pollProgress();
+                    this.getJobTableTimer();
                 })
                 .catch((res) => {
                     if (res.status === 410) {
@@ -71,6 +102,10 @@ export default {
                 clearInterval(this.timer);
                 this.timer = null;
             }
+            if (this.tableTimer) {
+                clearInterval(this.tableTimer);
+                this.tableTimer = null;
+            }
             axios.post('/search/joblist/stop', { userId: this.$store.state.user.userInfo.id })
                 .then(() => {
                     this.status = 'exception';
@@ -82,9 +117,15 @@ export default {
                 axios.post('/search/joblist/progress', { userId: this.$store.state.user.userInfo.id })
                     .then(response => {
                         this.progress = response.data.percentage;
-                        if (this.progress >= 100) {
+                        if (this.progress < 0) {
+                            this.$message.error(response.data.error);
+                            clearInterval(this.timer);
+                            clearInterval(this.tableTimer);
+                        }
+                        else if (this.progress >= 100) {
                             this.status = 'success';
                             clearInterval(this.timer);
+                            clearInterval(this.tableTimer);
                         }
                     })
                     .catch(() => {
@@ -92,12 +133,38 @@ export default {
                         clearInterval(this.timer);
                     });
             }, 1000); // 每1秒轮询一次
-        }
+        },
+        getJobTableTimer() {
+            this.tableTimer = setInterval(() => {
+                this.fetchJobList();
+            }, 10000); // 每10s更新一次
+        },
+        async fetchJobList() {
+            try {
+                this.loading = true
+                const params = {
+                    userId: this.$store.state.user.userInfo.id,
+                    filterHash: getFiltersMD5(this.filters),
+                    page: this.currentPage,
+                    pageSize: this.pageSize
+                }
+                const response = await jobListFilterAPI(params)
+                this.jobList = response.data.items
+                this.totalNumber = response.data.total
+            } catch (error) {
+                this.$message.error(error.message || '请求职位列表失败')
+            } finally {
+                this.loading = false
+            }
+        },
     },
     beforeDestroy() {
         if (this.timer) {
             clearInterval(this.timer);
         }
+    },
+    mounted() {
+        this.fetchJobList();
     }
 }
 </script>

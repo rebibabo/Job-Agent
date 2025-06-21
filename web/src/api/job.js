@@ -17,6 +17,10 @@ export const jobListAPI = (params) => {
     return request.post('/api/job/page', params)
 }
 
+export const jobListFilterAPI = (params) => {
+    return request.post('/api/job/pageFilter', params)
+}
+
 export const cityListAllAPI = () => {
     return request.get('/api/job/cityAll')
 }
