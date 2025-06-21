@@ -13,4 +13,6 @@ public interface UserService {
     Boolean changePassword(UserPasswordDTO userPasswordDTO);
 
     Boolean addUser(UserAddDTO userAddDTO);
+
+    void deleteUser(Integer userId);
 }

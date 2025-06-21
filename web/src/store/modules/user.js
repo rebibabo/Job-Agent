@@ -1,7 +1,7 @@
 // src/store/modules/user.js
 import {
     loginAPI
-} from '@/api/auth'; // 导入你的登录API接口
+} from '@/api/user'; // 导入你的登录API接口
 
 const state = {
     token: localStorage.getItem('token') || '', // 首先从本地存储位置获取token，如果没有设置为空，在登录成功后会设置token

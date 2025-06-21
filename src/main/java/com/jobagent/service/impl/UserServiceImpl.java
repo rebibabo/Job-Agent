@@ -63,4 +63,12 @@ public class UserServiceImpl implements UserService {
         userMapper.addUser(userAddDTO);
         return true;
     }
+
+    @Transactional
+    @Override
+    public void deleteUser(Integer userId) {
+        userMapper.deleteUser(userId);
+        userMapper.deleteJobByUserId(userId);
+        userMapper.deleteJobByUserId(userId);
+    }
 }

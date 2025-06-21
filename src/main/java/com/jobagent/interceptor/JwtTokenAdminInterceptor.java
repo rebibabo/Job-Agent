@@ -40,8 +40,8 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
         }
 
         String requestURI = request.getRequestURI();
-        if (requestURI.startsWith("/register") || requestURI.startsWith("/login")) {
-            return true; // 放行注册和登录请求
+        if (requestURI.startsWith("/user")) {
+            return true; // 放行用户相关请求
         }
 
         //1、从请求头中获取令牌

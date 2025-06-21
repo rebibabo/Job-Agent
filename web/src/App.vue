@@ -16,20 +16,21 @@
                             style="font-size: 18px;"></el-button>
                         <!-- 顶部右侧个人中心 -->
                         <div class="right-menu">
-                            <el-dropdown @command="handleCommand">
+                            <el-dropdown @command="handleCommand" :disabled="!$store.state.user.userInfo.userName">
                                 <span class="el-dropdown-link">
                                     <el-avatar size="small"
                                         src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png"></el-avatar>
                                     <span style="margin-left: 5px;" v-if="$store.state.user.userInfo.userName">
-                                    欢迎，{{ $store.state.user.userInfo.userName }}
+                                        欢迎，{{ $store.state.user.userInfo.userName }}
                                     </span>
                                     <span style="margin-left: 5px;" v-else>
-                                    未登录
+                                        未登录
                                     </span>
                                 </span>
                                 <el-dropdown-menu slot="dropdown">
-                                    <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                                    <el-dropdown-item command="profile">修改密码</el-dropdown-item>
                                     <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                                    <el-dropdown-item command="delete">注销账户</el-dropdown-item>
                                 </el-dropdown-menu>
                             </el-dropdown>
                         </div>
@@ -40,13 +41,16 @@
                 <el-dialog title="个人中心" :visible.sync="dialogVisible" width="400px">
                     <el-form :model="userInfo" label-width="80px">
                         <el-form-item label="用户名">
-                            <el-input v-model="userInfo.userName" placeholder="请输入新的用户名" style="width: 260px;"/>
+                            <el-input v-model="userInfo.userName" placeholder="请输入新的用户名" style="width: 260px;"
+                            @keyup.enter.native="onUsernameEnter" />
                         </el-form-item>
                         <el-form-item label="旧密码">
-                            <el-input type="password" v-model="userInfo.oldPassword" placeholder="请输入原始密码"  style="width: 260px;"/>
+                            <el-input type="password" v-model="userInfo.oldPassword" placeholder="请输入原始密码" ref="oldPasswordInput"
+                                style="width: 260px;" @keyup.enter.native="onOldPasswordEnter" />
                         </el-form-item>
                         <el-form-item label="新密码">
-                            <el-input type="password" v-model="userInfo.newPassword" placeholder="请输入新的密码"  style="width: 260px;"/>
+                            <el-input type="password" v-model="userInfo.newPassword" placeholder="请输入新的密码" ref="newPasswordInput"
+                                style="width: 260px;" @keyup.enter.native="submitRule" />
                         </el-form-item>
                     </el-form>
 
@@ -67,7 +71,7 @@
   
 <script>
 import Sidebar from './components/Sidebar.vue'
-import { changePasswordAPI } from '@/api/auth'
+import { changePasswordAPI, deleteUserAPI } from '@/api/user'
 import { getMD5LowerCase } from '@/utils/encrypt'
 
 export default {
@@ -94,10 +98,34 @@ export default {
             if (command === 'logout') {
                 this.logout();
             } else if (command === 'profile') {
-                console.log("进入个人中心");
-                console.log(this.userInfo)
                 this.dialogVisible = true;
+            } else if (command === 'delete') {
+                this.deleteUser();
             }
+        },
+        deleteUser() {
+            this.$confirm('确认注销账户吗？', "提示", {
+                "confirmButtonText": "确定",
+                "cancelButtonText": "取消",
+                "type": "warning"
+            })
+                .then(() => {
+                    deleteUserAPI(this.$store.state.user.userInfo.id).then(res => {
+                        if (res.code === 1) {
+                            this.$message.success('注销账户成功，请重新登录');
+                            this.$store.dispatch('user/logout')
+                            this.$router.push('/login')
+                        } else {
+                            this.$message.error(res.msg);
+                        }
+                    }).catch(err => {
+                        console.log(err)
+                        this.$message.error(err.msg);
+                    })
+                })
+                .catch(() => {
+                    console.log("用户取消注销账户")
+                })
         },
         logout() {
             this.$confirm('确认退出登录吗？', "提示", {
@@ -105,14 +133,14 @@ export default {
                 "cancelButtonText": "取消",
                 "type": "warning"
             })
-            .then(() => {
-                console.log("用户确认退出登录")
+                .then(() => {
+                    console.log("用户确认退出登录")
                     this.$store.dispatch('user/logout')
                     this.$router.push('/login')
                 })
-            .catch(() => {
-                console.log("用户取消退出登录")
-            })
+                .catch(() => {
+                    console.log("用户取消退出登录")
+                })
         },
         submitRule() {
             if (this.userInfo.newPassword === '') {
@@ -127,7 +155,7 @@ export default {
                 this.$message.error('新密码不能和旧密码相同');
                 return;
             }
-            const params = {...this.userInfo}
+            const params = { ...this.userInfo }
             params.oldPassword = getMD5LowerCase(params.oldPassword);
             params.newPassword = getMD5LowerCase(params.newPassword);
             changePasswordAPI(params).then(res => {
@@ -143,8 +171,24 @@ export default {
                 console.log(err)
                 this.$message.error(err.msg);
             })
-            
-        }
+        },
+        onUsernameEnter() {
+            console.log('onUsernameEnter')
+            if (!this.userInfo.oldPassword) {
+                this.$refs.oldPasswordInput.focus();
+            } else if (!this.userInfo.newPassword) {
+                this.$refs.newPasswordInput.focus();
+            } else {
+                this.submitRule();
+            }
+        },
+        onOldPasswordEnter() {
+            if (!this.userInfo.newPassword) {
+                this.$refs.newPasswordInput.focus();
+            } else {
+                this.submitRule();
+            }
+        },
     }
 }
 </script>
@@ -191,5 +235,4 @@ body {
 .el-container {
     height: 98vh;
     display: flex;
-}
-</style>
+}</style>

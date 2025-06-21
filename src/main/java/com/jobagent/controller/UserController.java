@@ -24,6 +24,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @Api(tags="用户相关接口")
+@RequestMapping("/user")
 public class UserController {
     @Autowired
     private UserService userService;
@@ -58,7 +59,7 @@ public class UserController {
         return Result.success(employeeLoginVO);
     }
 
-    @PostMapping("/userInfo/changePassword")
+    @PostMapping("/changePassword")
     public Result<String> changePassword(@RequestBody UserPasswordDTO userPasswordDTO) {
         log.info("修改用户密码:{}", userPasswordDTO);
         Boolean result = userService.changePassword(userPasswordDTO);
@@ -76,5 +77,15 @@ public class UserController {
             return Result.success();
         }
         return Result.error("用户名已存在");
+    }
+
+    @GetMapping("/delete/{userId}")
+    public Result deleteUser(@PathVariable("userId") Integer userId) {
+        log.info("删除用户:{}", userId);
+        if (userId == 1) {
+            return Result.error("不能删除admin用户");
+        }
+        userService.deleteUser(userId);
+        return Result.success();
     }
 }

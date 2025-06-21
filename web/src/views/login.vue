@@ -16,7 +16,7 @@
 
                     <el-form-item prop="username">
                         <el-input ref="username" v-model="loginForm.username" placeholder="用户名" prefix-icon="el-icon-user"
-                            name="username" type="text" tabindex="1" auto-complete="on" />
+                            name="username" type="text" tabindex="1" auto-complete="on" @keyup.enter.native="onUsernameEnter"/>
                     </el-form-item>
                     <br>
 
@@ -70,7 +70,7 @@
 </template>
   
 <script>
-import { userAddAPI } from '@/api/auth'
+import { userAddAPI } from '@/api/user'
 import { getMD5LowerCase } from '@/utils/encrypt'
 
 export default {
@@ -149,13 +149,25 @@ export default {
                 username: this.userInfo.username,
                 password: getMD5LowerCase(this.userInfo.password)
             }
-            userAddAPI(params).then(() => {
-                this.$message.success('注册成功')
-                this.dialogVisible = false
-                this.$refs.loginForm.resetFields()
+            userAddAPI(params).then((res) => {
+                if (res.data.code === 0) {
+                    this.$message.error(res.data.msg)
+                } else {
+                    this.$message.success('注册成功')
+                    this.dialogVisible = false
+                    this.loginForm.username = this.userInfo.username
+                    this.loginForm.password = this.userInfo.password
+                }
             }).catch((error) => {
                 this.$message.error(error.msg)
             })
+        },
+        onUsernameEnter() {
+            if (!this.loginForm.password) {
+                this.$refs.password.focus();
+            } else {
+                this.handleLogin();
+            }
         },
     }
 }
