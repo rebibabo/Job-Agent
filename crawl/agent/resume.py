@@ -7,7 +7,7 @@ import os
 
 class ResumeLoader:    
     def __init__(self, file_path):
-        self.file_path = file_path
+        self.file_path = os.path.abspath(file_path)
         self.file_name = os.path.basename(file_path)
         self.cache_dir = os.path.dirname(file_path)
         
@@ -27,8 +27,9 @@ class ResumeLoader:
             with open(os.path.join(self.cache_dir, 'content.txt'), 'w', encoding='utf-8') as f:
                 f.write(content)
             return content
-                
-    def get_summary(self, max_length=2048, api_key=None, base_url=None):
+        
+    @property        
+    def summary(self, max_length=2048, api_key=None, base_url=None):
         summary_file_path = os.path.join(self.cache_dir,'summary.md')
         if os.path.exists(summary_file_path):
             with open(summary_file_path, 'r', encoding='utf-8') as f:

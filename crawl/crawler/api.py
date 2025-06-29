@@ -1,10 +1,18 @@
 from crawler.requestHelper import Request
 from crawler.query import JobQuery
+from agent.resume import ResumeLoader
+from crawler.token import login
+from playwright.sync_api import sync_playwright
 from database.jobinfo import InsertDTO, JobInfo
+from uiautomation import WindowControl
 from utils.tools import get_user_id
 from typing import List
 from loguru import logger
+from constant import LOGIN_URL, QUERY_URL, LIST_URL
+from utils.configLoader import inject_config
+from utils.tools import md5_encrypt
 import datetime
+import requests
 import random
 import time
 import json
@@ -19,13 +27,13 @@ def get_job_detail(securityId, user_id=None):
     response = Request.get(user_id, url, params=params)
     data = response.json()
     if data["code"] == 0:
-        jobDetail = data["zpData"]
+        jobDetail = data["zpData"]["jobInfo"]["postDescription"]
         print(json.dumps(jobDetail, indent=4, ensure_ascii=False))
         return jobDetail
     else:
         return None
     
-def convert_json_to_job(title: str, js: dict) -> JobInfo:
+def convert_json_to_job(title: str, js: dict, user_id=None, get_desc: bool=False) -> JobInfo:
     jobinfo = JobInfo()
     jobinfo.securityId_(js["securityId"]).jobName_(js["jobName"]).jobType_(js["jobType"]).salary_(js["salaryDesc"])\
         .crawlDate_(datetime.datetime.now().strftime("%Y-%m-%d")).city_(js["cityName"]).region_(js["areaDistrict"]).experience_(js["jobExperience"])\
@@ -65,11 +73,16 @@ def convert_json_to_job(title: str, js: dict) -> JobInfo:
         salaryCeiling = 0
         
     jobinfo.salaryCeiling_(int(salaryCeiling)).salaryFloor_(int(salaryFloor))
+    if get_desc:
+        description = get_job_detail(jobinfo.securityId, user_id)
+        time.sleep(0.5)
+        if description:
+            jobinfo.description_(description)
     logger.info(f"{jobinfo.title} | {jobinfo.jobName} | {jobinfo.city} | {jobinfo.companyName}")
     return jobinfo
     
 
-def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None) -> InsertDTO:
+def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None, get_desc: bool=False) -> InsertDTO:
     # url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
     url = "https://www.zhipin.com/wapi/zpgeek/pc/recommend/job/list.json"
     num = 0
@@ -105,7 +118,7 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
             zpData = data["zpData"]
             jobList = zpData["jobList"]
             for job in jobList:
-                jobinfo = convert_json_to_job(query.title, job)
+                jobinfo = convert_json_to_job(query.title, job, user_id, get_desc)
                 jobInfoList.append(jobinfo)
                 num += 1
                 if num >= query.limit:
@@ -123,3 +136,58 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
                 return InsertDTO(user_id, jobInfoList, filter_hash, token)
         time.sleep(3)
     return InsertDTO(user_id, jobInfoList, filter_hash, token)
+
+
+@inject_config("application.yml", "user")
+class GetJobs:    
+    def __init__(self):
+        response = requests.post(LOGIN_URL, json={"username": self.config["username"], "password": md5_encrypt(self.config["password"])})
+        self.headers = {"token": response.json()["data"]["token"]}
+    
+    def get_jobs_by_ids(self, job_ids: List[int], user_id: str=None, max_num: int=100) -> List[JobInfo]:
+        params = {
+            "jobIds": ",".join(map(str, job_ids)),
+            "maxNum": max_num,
+            "userId": user_id or get_user_id()
+        }
+        response = requests.post(LIST_URL, json=params, headers=self.headers)
+        if response.status_code == 200:
+            jobList = []
+            data = response.json()
+            for job in data["data"]["items"]:
+                jobinfo = JobInfo.from_dict(job)
+                jobList.append(jobinfo)
+            return jobList
+        else:
+            return []
+
+def send_cv(user_id, jobs: List[JobInfo], cv_path, message):
+    cache_dir = f"cache/{user_id}"
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(headless=False)
+    loader = ResumeLoader(cv_path)
+    png_path = loader.picture_path
+    context = login(browser, cache_dir)
+    page = context.new_page()
+    for job in jobs:
+        if job.sentCv:     # 跳过已发送的岗位
+            continue
+        page.goto(job.url, wait_until="networkidle")
+        page.locator(".btn-container .btn-startchat").click()       # 立即沟通
+        page.wait_for_selector("#chat-input")
+        input_box = page.locator("#chat-input")
+        input_box.fill(message)
+        page.wait_for_timeout(2000)
+        page.locator("button[type=send]").click()
+        page.wait_for_timeout(2000)
+        page.locator(".toolbar-btn-content [type=file]").click()            # 点击发送简历照片
+        page.wait_for_timeout(1000)
+        openWindow = WindowControl(name='打开')
+        openWindow.SwitchToThisWindow()
+        openWindow.EditControl(Name='文件名(N):').SendKeys(png_path)
+        time.sleep(1)
+        openWindow.ButtonControl(Name='打开(O)').Click()
+        time.sleep(1)
+        context.close()
+        browser.close()
+        playwright.stop()

@@ -59,4 +59,7 @@ public interface JobMapper {
     // 插入用户-岗位关联，避免重复
     int insertUserJobIfNotExists(@Param("userId") String userId, @Param("jobId") Integer jobId, @Param("filterHash") String filterHash);
 
+    void updateDescription(JobInfo job);
+
+    Page<Job> getJobList(@Param("jobListDTO") JobListDTO jobListDTO);
 }

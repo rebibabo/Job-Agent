@@ -52,4 +52,4 @@ def set_user_id(userId=DEFAULT_USER_ID):
     return userId
 
 def get_user_id():
-    return os.environ.get(USER_ID_NAME)
+    return DEFAULT_USER_ID

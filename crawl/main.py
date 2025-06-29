@@ -1,3 +1,4 @@
+from agent.ranker import GPTRanker
 from crawler.api import get_job_list
 from crawler.query import JobQuery
 from crawler.token import TokenFetcher
@@ -10,17 +11,22 @@ from loguru import logger
 import time
 import os
 from multiprocessing import Process, Manager
+from agent.resume import ResumeLoader
+from agent.filter import GPTFilter
 
 app = Flask(__name__)
 
 # 本地跑
 def main():
     user_id = set_user_id()
-    TokenFetcher.userId = user_id
-    titles = db_pool.execute('SELECT name FROM title WHERE type="互联网/AI"')
-    titles = [x[0] for x in titles]
-    cities = ["北京", "上海", "深圳", "广州", "杭州", "成都", "武汉", "西安", "长沙", "南京", "苏州", "重庆"]
+    resume = ResumeLoader("cache/1/resume/实习简历_袁忠升/实习简历_袁忠升.pdf")
+    # titles = db_pool.execute('SELECT name FROM title WHERE type="互联网/AI"')
+    # titles = [x[0] for x in titles]
+    titles = ["数据开发", "数据分析师", "Python"]
+    # cities = ["北京", "上海", "深圳", "广州", "杭州", "成都", "武汉", "西安", "长沙", "南京", "苏州", "重庆"]
+    cities = ["北京"]
     iterator = CachedIterator([cities, titles], f'cache/{user_id}/crawl/crawl.json')
+    jobList = []
     for city, title in iterator:
         query = JobQuery(
             userId=user_id,
@@ -28,11 +34,23 @@ def main():
             industry=["互联网"],
             jobType="全职",
             title=title,
-            limit=60
+            limit=5
         )
-        insertDTO = get_job_list(query, user_id=user_id)
+        insertDTO = get_job_list(query, user_id=user_id, get_desc=True)
+        jobList.extend(insertDTO.jobs)
+        
         insertDTO.commit_to_db()
         time.sleep(2)
+        
+    search_input = "数据开发岗位"
+    filter = GPTFilter(jobList, search_input)
+    jobList = filter.filter(batch_size=3)
+    print("过滤后的条数：", len(jobList))
+    ranker = GPTRanker(jobList, resume.file_path)
+    jobList = ranker.rank(window_length=3, step=1)
+    for job in jobList:
+        print(job.description)
+        print('=====================================')
 
 # 开端口跑
 @app.route('/api/crawl', methods=['POST'])
@@ -59,7 +77,6 @@ def run_crawler(data, job_status):
     stage = data.get('stage', [])
     filterHash = data.get('filterHash', '')
         
-    TokenFetcher.userId = user_id
     cache_path = f'cache/{user_id}/crawl/crawl_{filterHash}.json'
     iterator = CachedIterator([cities, titles], cache_path)
     progress = iterator.index / iterator.total * 100
@@ -82,7 +99,7 @@ def run_crawler(data, job_status):
                 limit=limit,
                 keyword=keyword,
                 scale=scale,
-                stage=stage
+                stage=stage,
             )
             insertDTO = get_job_list(query, job_status, user_id, filterHash)
             insertDTO.commit_to_db()
@@ -174,8 +191,8 @@ def create_app(job_status):
     return app
     
 if __name__ == '__main__':
-    # main()
-    manager = Manager()
-    job_status = manager.dict()
-    app = create_app(job_status)
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    main()
+    # manager = Manager()
+    # job_status = manager.dict()
+    # app = create_app(job_status)
+    # app.run(debug=False, host='0.0.0.0', port=5000)

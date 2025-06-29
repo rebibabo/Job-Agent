@@ -1,5 +1,6 @@
 from openai import OpenAI
 from typing import List, Dict, Literal, TypeAlias
+from constant import DEFAULT_MODEL
 
 Message: TypeAlias = Dict[Literal["role", "content"], str]
 
@@ -10,7 +11,7 @@ def get_llm(api_key: str=None, base_url: str=None):
 def get_response(
     LLM: OpenAI, 
     messages: List[Message], 
-    model: str = "gpt-4o-mini", 
+    model: str = DEFAULT_MODEL, 
     temperature: float = 0.5, 
     max_tokens: int = 2000, 
 ) -> str:

@@ -1,19 +1,21 @@
 from typing import List
 from agent.resume import ResumeLoader
 from database.jobinfo import JobInfo
-from utils.llm import get_response
+from utils.llm import get_response, get_llm
+from constant import DEFAULT_MODEL
 import re
 
 class GPTRanker:
     def __init__(self, jobinfo: List[JobInfo], cv_path: str):
         self.jobinfo = jobinfo
         self.jobs = [(i, job.description) for i, job in enumerate(jobinfo)]
-        self.cv = ResumeLoader(cv_path).summary
+        self.cv = ResumeLoader(cv_path).content
         
     def batch_ranker(
         self,
+        LLM,
         jobs: tuple[int, str],     
-        model: str = "gpt-4o-mini-2024-07-18", 
+        model: str = DEFAULT_MODEL, 
         temperature: float = 0.5, 
     ) -> List[int]:
         ''' Query OpenAI API to generate a response to a given input. '''
@@ -33,7 +35,7 @@ class GPTRanker:
         messages.append({"role": "assistant", "content": "收到简历"})
         messages.append({"role": "user", "content": f"请根据用户个人简历对上面{num}个招聘岗位进行匹配度排名，岗位需要使用他们的标识符按照降序排列，最相关的岗位应该排在前面，输出的格式应该是 [] > [], eg., [0] > [2]。只要回答排名结果，不要解释任何理由。"})
             
-        response = get_response(messages, model, temperature)
+        response = get_response(LLM, messages, model, temperature)
         
         ans = []
         for each in response.split(">"):
@@ -48,18 +50,25 @@ class GPTRanker:
     def rank(self, 
         window_length=4, 
         step=2,
-        model: str = "gpt-4o-mini-2024-07-18", 
+        model: str = DEFAULT_MODEL, 
+        api_key: str = None,
+        base_url: str = None
     ) -> List[JobInfo]:
+        if not self.jobs:
+            return []
+        
         ans = []
 
         left = max(len(self.jobs)-window_length, 0)
         batch_jobs = self.jobs[left+step:] 
 
+        LLM = get_llm(api_key=api_key, base_url=base_url)
+        
         while left >= 0:
             left = max(left, 0)
             batch_jobs.extend(self.jobs[left:left+step])
             for _ in range(3):
-                rank = self.batch_ranker(batch_jobs, model=model)
+                rank = self.batch_ranker(LLM, batch_jobs, model=model)
                 if rank:
                     print(rank)
                     break

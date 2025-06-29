@@ -17,3 +17,7 @@ DEFAULT_USER_ID = "1"
 # 修改为后端的接口url
 INSERT_URL = "http://localhost:8081/job/insert"     
 LOGIN_URL = "http://localhost:8081/user/login"
+QUERY_URL = "http://localhost:8081/job/page"
+LIST_URL = "http://localhost:8081/job/list"
+
+DEFAULT_MODEL = "gpt-4o-mini"

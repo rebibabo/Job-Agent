@@ -14,7 +14,7 @@ class JobQuery:
         stage: List[str]=[],        # 融资情况
         jobType: str='',            # 职位性质
         title: str='',              # 职位类型
-        salary: List[str]=[],             # 薪资范围
+        salary: List[str]=[],       # 薪资范围
         areaBusiness: str='',       # 区域商圈
         limit: int=300,             # 最大返回数量
     ):
@@ -97,3 +97,4 @@ class JobQuery:
         for attr in self.__dict__:
             str += f'{attr}: {self.__dict__[attr]}\n'
         return str + '\n'
+    

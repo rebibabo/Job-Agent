@@ -31,4 +31,6 @@ public interface JobService {
     void setViewStatus(JobViewDTO jobViewDTO);
 
     String insertJobs(InsertJobsDTO insertJobsDTO);
+
+    PageResult getJobList(JobListDTO jobListDTO);
 }

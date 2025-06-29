@@ -100,4 +100,11 @@ public class JobController {
         return Result.success(message);
     }
 
+    @PostMapping("/list")
+    public Result<PageResult> getJobList(@RequestBody JobListDTO jobListDTO) {
+        log.info("查询岗位: {}", jobListDTO);
+        PageResult pageResult = jobService.getJobList(jobListDTO);
+        return Result.success(pageResult);
+    }
+
 }

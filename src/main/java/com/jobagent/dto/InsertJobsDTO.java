@@ -11,4 +11,5 @@ public class InsertJobsDTO {
     private String userId;
     private String filterHash;
     private List<JobInfo> jobs;
+    private List<String> jobIdsList;
 }

@@ -88,7 +88,7 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public String insertJobs(InsertJobsDTO insertJobsDTO) {
-        int total=0, insertNum=0;
+        int total=0, insertNum=0, updateNum=0;
         for (JobInfo job : insertJobsDTO.getJobs()) {
             Integer jobId = jobMapper.selectJobIdIfExists(job);
             total++;
@@ -98,6 +98,13 @@ public class JobServiceImpl implements JobService {
                 insertNum++;
                 jobId = job.getJobId(); // 主键已回填
             }
+            else if (job.getDescription() != null) {
+                jobMapper.updateDescription(job);
+                updateNum++;
+            }
+            else {
+                continue;
+            }
 
             // 先插入公司
             jobMapper.insertCompanyIfNotExists(job);
@@ -105,6 +112,19 @@ public class JobServiceImpl implements JobService {
             // 插入用户与岗位关联
             jobMapper.insertUserJobIfNotExists(insertJobsDTO.getUserId(), jobId, filterHash);
         }
-        return "成功插入" + insertNum + "条数据，其中有" + (total-insertNum) + "条重复数据";
+        return "成功插入" + insertNum + "条数据，更新" + updateNum + "条岗位描述信息，共" + (total-insertNum) + "条重复数据";
+    }
+
+    @Override
+    public PageResult getJobList(JobListDTO jobListDTO) {
+        int pageNo = 1,  pageSize = jobListDTO.getMaxNum();
+        PageHelper.startPage(pageNo, pageSize);
+        Page<Job> page = jobMapper.getJobList(jobListDTO);
+
+        long total = page.getTotal();
+        List<Job> records = page.getResult();
+        PageResult pageResult = new PageResult(total, records);
+        pageResult._hasNext(pageNo, pageSize);
+        return pageResult;
     }
 }

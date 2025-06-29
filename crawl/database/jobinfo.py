@@ -29,7 +29,9 @@ class JobInfo:
     scale: str
     stage: str
     welfare: str
-
+    id: str
+    viewed: bool
+    sentCv: bool
     
     def __post_init__(self):
         self.region = self.region.strip()
@@ -41,6 +43,22 @@ class JobInfo:
         
     def to_dict(self):
         return self.__dict__
+    
+    @classmethod
+    def from_dict(cls, js):
+        allowed_keys = set(cls.__annotations__.keys())
+        obj = cls.__new__(cls)  # 创建空实例，不调用 __init__
+        for k, v in js.items():
+            if k in allowed_keys:
+                setattr(obj, k, v)
+        obj.__post_init__()  # 调用清理方法
+        return obj
+    
+    def __str__(self):
+        str = self.__class__.__name__ + ':\n'
+        for attr in self.__dict__:
+            str += f'{attr}: {self.__dict__[attr]}\n'
+        return str + '\n'
 
 @inject_config("application.yml", "user")
 class InsertDTO:
@@ -50,10 +68,7 @@ class InsertDTO:
         self.userId = userId
         self.jobs = jobs
         self.filterHash = filterHash or ""
-        if token:
-            InsertDTO.token = token
-        else:
-            self.get_token()
+        self.get_token()
             
     def get_token(self):
         response = requests.post(LOGIN_URL, json={"username": self.config["username"], "password": md5_encrypt(self.config["password"])})
@@ -77,5 +92,3 @@ class InsertDTO:
             self.get_token()
             self.commit_to_db()
         return False
-
-    

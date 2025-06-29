@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.jobagent.mapper.JobMapper">
+
     <select id="pageQuery" resultType="com.jobagent.entity.Job">
         SELECT j.*, c.name companyName, c.scale, c.stage, c.welfare, sent_cv, viewed FROM job j, company c, user_job u
         <where>
@@ -90,8 +91,20 @@
         SELECT id
         FROM job
         WHERE city = #{city}
-          AND companyId = #{companyId}
-          AND jobName = #{jobName}
+              AND companyId = #{companyId}
+              AND jobName = #{jobName}
+    </select>
+
+    <select id="getJobList" resultType="com.jobagent.entity.Job">
+        SELECT j.*, c.name companyName, c.scale, c.stage, c.welfare, sent_cv, viewed
+        FROM job j, company c, user_job u
+        WHERE j.id IN
+        <foreach collection="jobListDTO.getJobIdsList()" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+            AND j.companyId = c.id
+            AND u.user_id = #{jobListDTO.userId}
+            AND u.job_id = j.id
     </select>
 
     <insert id="insertJob" parameterType="com.jobagent.entity.JobInfo" useGeneratedKeys="true" keyProperty="jobId">
@@ -160,6 +173,12 @@
             )
     </insert>
 
-
+    <update id="updateDescription" parameterType="com.jobagent.entity.JobInfo">
+        UPDATE job
+        SET description = #{description}
+        WHERE city = #{city}
+          AND companyId = #{companyId}
+          AND jobName = #{jobName}
+    </update>
 
 </mapper>

@@ -51,22 +51,10 @@ class Request:
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0",
         "x-requested-with": "XMLHttpRequest"
     }
-    cookies = {
-        "lastCity": "101280100",
-        "ab_guid": "8414e985-90be-46a1-a608-66e102e1e653",
-        "__zp_seo_uuid__": "7d078ad1-392d-485b-b01e-dd3c46de87c2",
-        "__g": "-",
-        "Hm_lvt_194df3105ad7148dcf2b98a91b5e727a": "1750060305,1751160840",
-        "HMACCOUNT": "9F2B10F1A9B9D90B",
-        "Hm_lpvt_194df3105ad7148dcf2b98a91b5e727a": "1751160857",
-        "__l": "r=https%3A%2F%2Fcn.bing.com%2F&l=%2Fwww.zhipin.com%2Fweb%2Fuser%2F%3Fka%3Dheader-login&s=3&friend_source=0&s=3&friend_source=0",
-        "__zp_stoken__": "1a7bfwrk5CjgEWHVcCl1zTMK5wrlUecK3VMKlwoHCrnzCv1BsdlxpX3teRsK1wqLCu07Cr2fCrcKww7NpwqPClcK7S8KcwqXCo17DvcKTwpPElsOnwqnFgcKew4DCucKcOTEGAwcICAoPCwwMCw4HCAgIBQkGBhEMEA8POS3DtcOlwpI3MzoyJE1QTARQXFpFYUQCVERFMjgJCQoROC81MjI0wrs1wr1Kwr45wrpKw4A0wr7ClTI6NDnCtsOxJyLCsz5XwrLCoAXCtsORDmoFwrXCiAbDhGFVwpNQwrdBMTg4wrTEuDo5FDoyNjs5N0E2OSQ3E8OFWlLClUvCth0pNBI%2BOTk%2BNDY5OUAyPCU5Py4kOTIkPgYLCggRJzzCtsKVwrnDoDk5",
-        "__c": "1751155114",
-        "__a": "11520517.1722925713.1750060305.1751155114.304.11.12.70"
-    }
+    cookies = list_all_cookies("cache/1")
 
     fetcher = None
-    max_retry = 10
+    max_retry = 50
     request_cnt = max_retry
 
     @classmethod
