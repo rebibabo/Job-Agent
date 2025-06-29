@@ -14,5 +14,6 @@ WAIT_FOR_LOAD = "networkidle"
 USER_ID_NAME = "USER_ID"
 DEFAULT_USER_ID = "1"
 
-INSERT_URL = "http://localhost:8081/job/insert"
-LOGIN_URL = "http://localhost:8081/login"
+# 修改为后端的接口url
+INSERT_URL = "http://localhost:8081/job/insert"     
+LOGIN_URL = "http://localhost:8081/user/login"

@@ -3,11 +3,12 @@ from crawler.query import JobQuery
 from crawler.token import TokenFetcher
 from database.connector import db_pool
 from utils.cache import CachedIterator
-from utils.tools import set_user_id, get_param_hash
+from utils.tools import set_user_id
 from flask import Flask, request, jsonify
-from constant import USER_ID_NAME, DEFAULT_USER_ID, ALREADY_RUN_CODE
-import os
+from constant import DEFAULT_USER_ID, ALREADY_RUN_CODE
+from loguru import logger
 import time
+import os
 from multiprocessing import Process, Manager
 
 app = Flask(__name__)
@@ -19,7 +20,7 @@ def main():
     titles = db_pool.execute('SELECT name FROM title WHERE type="互联网/AI"')
     titles = [x[0] for x in titles]
     cities = ["北京", "上海", "深圳", "广州", "杭州", "成都", "武汉", "西安", "长沙", "南京", "苏州", "重庆"]
-    iterator = CachedIterator([cities, titles], f'cache/{user_id}/crawl.json')
+    iterator = CachedIterator([cities, titles], f'cache/{user_id}/crawl/crawl.json')
     for city, title in iterator:
         query = JobQuery(
             userId=user_id,
@@ -43,7 +44,9 @@ def run_crawler(data, job_status):
 
     industry = data.get('industry', [])
     jobType = data.get('jobType', '全职')
-    cities = data.get('city', ["北京", "上海", "深圳", "广州", "杭州", "成都", "武汉", "西安", "长沙", "南京", "苏州", "重庆"])
+    cities = data.get('city', [])
+    if not cities:
+        cities = ["北京", "上海", "深圳", "广州", "杭州", "成都", "武汉", "西安", "长沙", "南京", "苏州", "重庆"]
     titles = db_pool.execute('SELECT name FROM title WHERE type="互联网/AI"')
     titles = [x[0] for x in titles]
     titles = data.get('title', titles)
@@ -57,7 +60,7 @@ def run_crawler(data, job_status):
     filterHash = data.get('filterHash', '')
         
     TokenFetcher.userId = user_id
-    cache_path = f'cache/{user_id}/crawl_{filterHash}.json'
+    cache_path = f'cache/{user_id}/crawl/crawl_{filterHash}.json'
     iterator = CachedIterator([cities, titles], cache_path)
     progress = iterator.index / iterator.total * 100
     job_status[user_id] = {     # 需要完整赋值，job_status[user_id]['percentage']是不会进程共享的
@@ -100,7 +103,7 @@ def run_crawler(data, job_status):
             'percentage': 100
         }
     except Exception as e:
-        print(e)
+        logger.error(e)
         job_status[user_id] = {
             'running': 0,
             'percentage': -1,
@@ -145,6 +148,28 @@ def create_app(job_status):
                 'running': 0,
             }
         return jsonify({"message": "Job stopped"}), 200
+
+    @app.route('/resume/<user_id>', methods=['POST'])
+    def upload_resume(user_id):
+        # 检查文件
+        if 'file' not in request.files:
+            return jsonify({"message": "No file uploaded"}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"message": "Empty filename"}), 400
+        
+        if not file.filename.lower().endswith('.pdf'):
+            return jsonify({"message": "Only PDF allowed"}), 400
+
+        pdf_name = os.path.splitext(file.filename)[0]
+        save_dir = os.path.join("cache", user_id, "resume", pdf_name)
+        os.makedirs(save_dir, exist_ok=True)
+        
+        save_path = os.path.join(save_dir, file.filename)
+        file.save(save_path)
+        
+        return jsonify({"message": "Upload success", "path": save_path}), 200
 
     return app
     

@@ -85,10 +85,10 @@
         <el-dialog title="保存规则" :visible.sync="ruleDialogVisible" width="500px">
             <el-form :model="ruleInfo" label-width="80px">
                 <el-form-item label="规则名称">
-                    <el-input v-model="ruleInfo.ruleName" placeholder="请输入规则名称" />
+                    <el-input v-model="ruleInfo.ruleName" placeholder="请输入规则名称" @keyup.enter.native="onRuleNameEnter"/>
                 </el-form-item>
                 <el-form-item label="规则描述">
-                    <el-input type="textarea" v-model="ruleInfo.ruleDescription" placeholder="请输入规则描述" />
+                    <el-input type="textarea" v-model="ruleInfo.ruleDescription" ref="ruleDescription" placeholder="请输入规则描述" @keyup.enter.native="onUserDescEnter"/>
                 </el-form-item>
             </el-form>
 
@@ -316,7 +316,6 @@ export default {
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(() => {
-                console.log(rule)
                 deleteRuleAPI(rule.id).then(() => {
                     this.$message.success('规则删除成功');
                     // 重新加载规则列表
@@ -328,6 +327,16 @@ export default {
             }).catch(() => {
                 // 用户取消操作
             });
+        },
+        onRuleNameEnter() {
+            if (this.ruleInfo.ruleName) {
+                this.$refs.ruleDescription.focus();
+            }
+        },
+        onUserDescEnter() {
+            if (this.ruleInfo.ruleDescription && this.ruleInfo.ruleName) {
+                this.submitRule();
+            }
         }
     }
 };

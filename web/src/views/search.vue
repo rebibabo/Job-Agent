@@ -72,6 +72,7 @@ export default {
                 clearInterval(this.tableTimer);
                 this.tableTimer = null;
             }
+            this.fetchJobList();
 
             // 假设启动任务接口
             this.status = null;

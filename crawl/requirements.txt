@@ -2,3 +2,4 @@ DBUtils
 pymysql
 pyyaml
 flask
+PyMuPDF

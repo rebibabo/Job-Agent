@@ -5,16 +5,18 @@ from utils.tools import get_user_id
 from typing import List
 from loguru import logger
 import datetime
+import random
 import time
 import json
 
-def get_job_detail(securityId):
-
+def get_job_detail(securityId, user_id=None):
+    if user_id is None:
+        user_id = get_user_id()
     url = "https://www.zhipin.com/wapi/zpgeek/job/detail.json"
     params = {
         "securityId": securityId,
     }
-    response = Request.get(url, params=params)
+    response = Request.get(user_id, url, params=params)
     data = response.json()
     if data["code"] == 0:
         jobDetail = data["zpData"]
@@ -68,7 +70,8 @@ def convert_json_to_job(title: str, js: dict) -> JobInfo:
     
 
 def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None) -> InsertDTO:
-    url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
+    # url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
+    url = "https://www.zhipin.com/wapi/zpgeek/pc/recommend/job/list.json"
     num = 0
     jobInfoList: List[JobInfo] = []
     while True:
@@ -78,7 +81,7 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
                 print("停止运行")
                 return InsertDTO(user_id, jobInfoList, filter_hash, token)
         params = {
-            "page": 1,
+            "page": random.randint(1, 10),
             "pageSize": "30",       # 最大是30
             "city": query.city,
             "jobType": query.jobType,
@@ -92,7 +95,7 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
         }
         if user_id is None:
             user_id = get_user_id()
-        response = Request.get(url, params=params)
+        response = Request.get(user_id, url, params=params)
         try:
             data = response.json()
         except:
@@ -108,9 +111,9 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
                 if num >= query.limit:
                     return InsertDTO(user_id, jobInfoList, filter_hash, token)
             if zpData["hasMore"] == False:
-                break
+                params["page"] = random.randint(1, max(2, params["page"]-5))        # 使用随机页数避免重复抓取
             else:
-                params["page"] += 1
+                params["page"] = random.randint(1, params["page"]+10)
         else:
             break
         if job_status:
