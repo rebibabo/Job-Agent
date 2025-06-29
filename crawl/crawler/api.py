@@ -173,7 +173,13 @@ def send_cv(user_id, jobs: List[JobInfo], cv_path, message):
         if job.sentCv:     # 跳过已发送的岗位
             continue
         page.goto(job.url, wait_until="networkidle")
+        if page.locator(".btn-more").count() > 0:       # 该职位已关闭
+            continue        
         page.locator(".btn-container .btn-startchat").click()       # 立即沟通
+        page.wait_for_timeout(1000)
+        if page.locator(".dialog-title .icon-close").count() > 0:
+            page.locator(".dialog-title .icon-close").click()       # 关闭弹窗
+            page.locator(".btn-container .btn-startchat").click()   # 再次点击立即沟通
         page.wait_for_selector("#chat-input")
         input_box = page.locator("#chat-input")
         input_box.fill(message)
@@ -187,7 +193,7 @@ def send_cv(user_id, jobs: List[JobInfo], cv_path, message):
         openWindow.EditControl(Name='文件名(N):').SendKeys(png_path)
         time.sleep(1)
         openWindow.ButtonControl(Name='打开(O)').Click()
-        time.sleep(1)
-        context.close()
-        browser.close()
-        playwright.stop()
+        page.wait_for_selector(".item-image")       # 等待发送图片出去再退出
+    context.close()
+    browser.close()
+    playwright.stop()
