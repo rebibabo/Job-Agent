@@ -1,7 +1,6 @@
 from agent.ranker import GPTRanker
 from crawler.api import get_job_list
 from crawler.query import JobQuery
-from crawler.token import TokenFetcher
 from database.connector import db_pool
 from utils.cache import CachedIterator
 from utils.tools import set_user_id
@@ -76,6 +75,7 @@ def run_crawler(data, job_status):
     scale = data.get('scale', [])
     stage = data.get('stage', [])
     filterHash = data.get('filterHash', '')
+    get_desc = data.get('getDesc', False)
         
     cache_path = f'cache/{user_id}/crawl/crawl_{filterHash}.json'
     iterator = CachedIterator([cities, titles], cache_path)
@@ -101,7 +101,7 @@ def run_crawler(data, job_status):
                 scale=scale,
                 stage=stage,
             )
-            insertDTO = get_job_list(query, job_status, user_id, filterHash)
+            insertDTO = get_job_list(query, job_status, user_id, filterHash, get_desc=get_desc)
             insertDTO.commit_to_db()
             progress = iterator.index / iterator.total * 100
             job_status[user_id] = {
@@ -170,29 +170,31 @@ def create_app(job_status):
     def upload_resume(user_id):
         # 检查文件
         if 'file' not in request.files:
-            return jsonify({"message": "No file uploaded"}), 400
+            return jsonify({"message": "没有文件上传"}), 400
         
         file = request.files['file']
         if file.filename == '':
-            return jsonify({"message": "Empty filename"}), 400
+            return jsonify({"message": "空文件"}), 400
         
         if not file.filename.lower().endswith('.pdf'):
-            return jsonify({"message": "Only PDF allowed"}), 400
+            return jsonify({"message": "只允许PDF格式文件"}), 400
 
         pdf_name = os.path.splitext(file.filename)[0]
         save_dir = os.path.join("cache", user_id, "resume", pdf_name)
+        if os.path.exists(save_dir):
+            return jsonify({"message": "简历已存在"}), 400
         os.makedirs(save_dir, exist_ok=True)
         
         save_path = os.path.join(save_dir, file.filename)
         file.save(save_path)
         
-        return jsonify({"message": "Upload success", "path": save_path}), 200
+        return jsonify({"message": "上传成功", "path": save_path}), 200
 
     return app
     
 if __name__ == '__main__':
-    main()
-    # manager = Manager()
-    # job_status = manager.dict()
-    # app = create_app(job_status)
-    # app.run(debug=False, host='0.0.0.0', port=5000)
+    # main()
+    manager = Manager()
+    job_status = manager.dict()
+    app = create_app(job_status)
+    app.run(debug=False, host='0.0.0.0', port=5000)

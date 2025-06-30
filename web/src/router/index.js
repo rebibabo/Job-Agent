@@ -9,7 +9,7 @@ const router = new Router({
     routes: [{
             path: '/login',
             name: 'Login',
-            component: () => import( /* webpackChunkName: "login" */ '@/views/login.vue'),
+            component: () => import('@/views/login.vue'),
             meta: {
                 title: '登录'
             }
@@ -17,7 +17,7 @@ const router = new Router({
         {
             path: "/404",
             name: "404",
-            component: () => import( /* webpackChunkName: "404" */ "@/views/404.vue"),
+            component: () => import("@/views/404.vue"),
             meta: {
                 title: "404"
             },
@@ -52,6 +52,14 @@ const router = new Router({
             component: () => import("@/views/analysis.vue"),
             meta: {
                 title: "职位查询"
+            },
+        },
+        {
+            path: "/sendResume",
+            name: "SendResume",
+            component: () => import("@/views/sendResume.vue"),
+            meta: {
+                title: "简历智能投递"
             },
         },
         {

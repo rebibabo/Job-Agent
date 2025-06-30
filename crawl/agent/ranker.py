@@ -22,18 +22,18 @@ class GPTRanker:
         
         num = len(jobs)
         messages = [
-            {"role": "system", "content": "你是一个智能的排序助手，能够根据用户的个人简历，对招聘岗位进行匹配度排名，排名依据包括但不限于学历要求、工作经验、技能、项目经历、工作经历等。"},
-            {"role": "user", "content": f"我将提供给你{num}个招聘岗位信息，每一个岗位通过数字和[]标识，根据简历对岗位需求的匹配程度来进行排序"},
-            {"role": "assistant", "content": "好的，请提供各个岗位"},
+            {"role": "system", "content": "你是一个拥有丰富大厂经验的hr，能够根据用户的个人简历和岗位介绍，对招聘岗位进行匹配度打分，打分依据包括但不限于简历中的学历要求、工作经验、技能要求、项目经历、工作经历等。"},
+            {"role": "user", "content": f"我将提供给你{num}个招聘岗位信息，每一个岗位通过数字和[]标识，根据简历对岗位需求的匹配程度来进行打分。"},
+            {"role": "assistant", "content": "好的，请提供各个岗位，我将为你进行匹配度打分。"},
         ]
         
         for i, job in jobs:
-            messages.append({"role": "user", "content": f"[{i}] {job}"})
+            messages.append({"role": "user", "content": f"岗位[{i}]\n{job}"})
             messages.append({"role": "assistant", "content": f"收到岗位[{i}]"})
             
         messages.append({"role": "user", "content": f"用户个人简历如下\n{self.cv}"})
         messages.append({"role": "assistant", "content": "收到简历"})
-        messages.append({"role": "user", "content": f"请根据用户个人简历对上面{num}个招聘岗位进行匹配度排名，岗位需要使用他们的标识符按照降序排列，最相关的岗位应该排在前面，输出的格式应该是 [] > [], eg., [0] > [2]。只要回答排名结果，不要解释任何理由。"})
+        messages.append({"role": "user", "content": f"请根据用户个人简历对上面{num}个招聘岗位进行匹配度打分，输出的格式是整数列表，长度和岗位数量相同，第i个元素表示第i个岗位的匹配度打分，满分10分。 eg., [9, 7, 8, 4]。只要回答排名结果，不要解释任何理由。"})
             
         response = get_response(LLM, messages, model, temperature)
         

@@ -86,7 +86,7 @@ export default {
                 }
             }
             params.filterHash = getFiltersMD5(this.filters);
-            axios.post('/search/joblist/start', params)
+            axios.post('/crawl/joblist/start', params)
                 .then(() => {
                     this.progress = 0;
                     this.pollProgress();
@@ -107,7 +107,7 @@ export default {
                 clearInterval(this.tableTimer);
                 this.tableTimer = null;
             }
-            axios.post('/search/joblist/stop', { userId: this.$store.state.user.userInfo.id })
+            axios.post('/crawl/joblist/stop', { userId: this.$store.state.user.userInfo.id })
                 .then(() => {
                     this.status = 'exception';
                 });
@@ -115,7 +115,7 @@ export default {
         pollProgress() {
             // 定时向后端获取进度
             this.timer = setInterval(() => {
-                axios.post('/search/joblist/progress', { userId: this.$store.state.user.userInfo.id })
+                axios.post('/crawl/joblist/progress', { userId: this.$store.state.user.userInfo.id })
                     .then(response => {
                         this.progress = response.data.percentage;
                         if (this.progress < 0) {

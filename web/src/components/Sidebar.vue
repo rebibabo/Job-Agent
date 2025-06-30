@@ -29,6 +29,11 @@
         <i class="el-icon-s-data"></i>
         <span slot="title">职位分析</span>
       </el-menu-item>
+
+      <el-menu-item index="/sendResume">
+        <i class="el-icon-s-data"></i>
+        <span slot="title">智能投递</span>
+      </el-menu-item>
  
     </el-menu>
   </template>
