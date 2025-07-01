@@ -169,7 +169,7 @@
             0,
             #{filterHash}
             WHERE NOT EXISTS (
-                SELECT 1 FROM user_job WHERE user_id = #{userId} AND job_id = #{jobId}
+                SELECT 1 FROM user_job WHERE user_id = #{userId} AND job_id = #{jobId} AND filter_hash = #{filterHash}
             )
     </insert>
 

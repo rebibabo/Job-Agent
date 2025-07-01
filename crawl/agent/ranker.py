@@ -2,8 +2,10 @@ from typing import List
 from agent.resume import ResumeLoader
 from database.jobinfo import JobInfo
 from utils.llm import get_response, get_llm
+from tqdm import trange
 from constant import DEFAULT_MODEL
 import re
+import numpy as np
 
 class GPTRanker:
     def __init__(self, jobinfo: List[JobInfo], cv_path: str):
@@ -33,56 +35,78 @@ class GPTRanker:
             
         messages.append({"role": "user", "content": f"用户个人简历如下\n{self.cv}"})
         messages.append({"role": "assistant", "content": "收到简历"})
-        messages.append({"role": "user", "content": f"请根据用户个人简历对上面{num}个招聘岗位进行匹配度打分，输出的格式是整数列表，长度和岗位数量相同，第i个元素表示第i个岗位的匹配度打分，满分10分。 eg., [9, 7, 8, 4]。只要回答排名结果，不要解释任何理由。"})
+        messages.append({"role": "user", "content": f"请根据用户个人简历对上面{num}个招聘岗位进行匹配度打分，输出的格式是整数列表，长度和岗位数量相同，第i个元素表示第i个岗位的匹配度打分，满分10分。 eg., [number1, number2, ..., numberx]。只要回答排名结果，不要解释任何理由。"})
             
         response = get_response(LLM, messages, model, temperature)
         
-        ans = []
-        for each in response.split(">"):
-            pattern = r"\[(\d+)\]"
-            numbers = re.findall(pattern, each)
-            if len(numbers) == 1:
-                ans.append(int(numbers[0]))
-            else:
-                return []
-        return ans
-        
+        try:
+            return eval(response)
+        except:
+            print("error in parsing response: ", response)
+            return None
+    
     def rank(self, 
-        window_length=4, 
-        step=2,
+        batch_size: int=16, 
         model: str = DEFAULT_MODEL, 
+        temperature: float = 0.5,
+        repeat: int = 5,
         api_key: str = None,
-        base_url: str = None
+        base_url: str = None,
     ) -> List[JobInfo]:
-        if not self.jobs:
-            return []
-        
-        ans = []
-
-        left = max(len(self.jobs)-window_length, 0)
-        batch_jobs = self.jobs[left+step:] 
-
+        total_scores = []
         LLM = get_llm(api_key=api_key, base_url=base_url)
-        
-        while left >= 0:
-            left = max(left, 0)
-            batch_jobs.extend(self.jobs[left:left+step])
-            for _ in range(3):
-                rank = self.batch_ranker(LLM, batch_jobs, model=model)
-                if rank:
-                    print(rank)
-                    break
-            if not rank:
+        for i in trange(0, len(self.jobinfo), batch_size):
+            repeat_scores = []
+            j = 0
+            while j < repeat:
+                batch_job = self.jobs[i:i+batch_size]
+                scores = self.batch_ranker(LLM, batch_job, model=model, temperature=temperature)
+                if scores and len(scores) == len(batch_job):
+                    j += 1
+                    repeat_scores.append(scores)
+            if scores is None:
                 print("Max retries reached, skipping...")
+                total_scores.extend([0]*batch_size)
                 continue
-            i = step
-            while i > 0 and rank:
-                ans.append(rank.pop())
-                i -= 1
-            left -= step
-            batch_jobs = [self.jobs[i] for i in rank]
-
-        while batch_jobs:
-            ans.append(batch_jobs.pop()[0])
-
-        return [self.jobinfo[i] for i in ans[::-1] if 0<=i<len(self.jobinfo)]
+                
+            repeat_scores = np.array(repeat_scores)
+            median_scores = np.median(repeat_scores, axis=0)
+            print(median_scores)
+            total_scores.extend(median_scores)
+            
+        res = []
+        for i, score in enumerate(total_scores):
+            self.jobinfo[i].score = score
+            res.append(self.jobinfo[i])
+            
+        res = sorted(res, key=lambda x: x.score, reverse=True)
+        return res
+    
+    def test_stability(self,
+        batch_size: int=16, 
+        model: str = DEFAULT_MODEL, 
+        temperature: float = 0.5,
+        api_key: str = None,
+        base_url: str = None,
+        repeat: int = 5
+    ):
+        LLM = get_llm(api_key=api_key, base_url=base_url)
+        for i in range(0, len(self.jobinfo), batch_size):
+            scores = None
+            j = 0
+            repeat_scores = []
+            while j < repeat:
+                batch_job = self.jobs[i:i+batch_size]
+                scores = self.batch_ranker(LLM, batch_job, model=model, temperature=temperature)
+                print(scores)
+                if scores and len(scores) == len(batch_job):
+                    j += 1
+                    repeat_scores.append(scores)
+            repeat_scores = np.array(repeat_scores)
+            mean_scores = np.mean(repeat_scores, axis=0)
+            std_scores = np.std(repeat_scores, axis=0)
+            median_scores = np.median(repeat_scores, axis=0)
+            print(f"Median scores: {median_scores}")
+            print(f"Mean scores: {mean_scores}")
+            print(f"Std scores: {std_scores}")
+                

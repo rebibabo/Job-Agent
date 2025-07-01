@@ -6,7 +6,7 @@ class JobQuery:
     def __init__(self, 
         userId: int,                # 用户ID    
         keyword: str='',            # 搜索关键词
-        city: str='',               # 城市名称
+        city: List[str]=[],         # 城市名称
         experience: List[str]=[],   # 经验要求
         degree: List[str]=[],       # 学历要求
         industry: List[str]=[],     # 行业
@@ -25,6 +25,8 @@ class JobQuery:
             if exp_id:
                 expereinces.append(exp_id)
         self.experience = ','.join(expereinces)
+        if isinstance(city, str):
+            city = [city]
         self.title = title
         
         self.jobType = JOBTYPE.get(jobType, '')
@@ -60,17 +62,20 @@ class JobQuery:
         
         self.query = keyword
         
-        results = db_pool.execute("SELECT DISTINCT code FROM title WHERE name=%s", (title,))
-        if results and len(results):
-            self.position = results[0][0]
-        else:
-            self.position = ""
+        if title:
+            results = db_pool.execute("SELECT DISTINCT code FROM title WHERE name=%s", (title,))
+            if results and len(results):
+                self.position = results[0][0]
             
-        results = db_pool.execute("SELECT DISTINCT city_id FROM city WHERE city=%s", (city,))
-        if results and len(results):
-            self.city = results[0][0]
+        cities = []
+        if not city:
+            self.cities = "100010000"  # 全国
         else:
-            self.city = '100010000'     # 全国
+            for city in city:
+                results = db_pool.execute("SELECT DISTINCT city_id FROM city WHERE city=%s", (city,))
+                if results and len(results):
+                    cities.append(results[0][0])
+            self.city = ','.join(cities)
         
         if areaBusiness:
             results = db_pool.execute("SELECT DISTINCT region_code FROM city WHERE city=%s AND region=%s", (city, areaBusiness))

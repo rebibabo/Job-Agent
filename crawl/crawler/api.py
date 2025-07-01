@@ -82,7 +82,7 @@ def convert_json_to_job(title: str, js: dict, user_id=None, get_desc: bool=False
     return jobinfo
     
 
-def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None, get_desc: bool=False) -> InsertDTO:
+def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None) -> InsertDTO:
     # url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
     url = "https://www.zhipin.com/wapi/zpgeek/pc/recommend/job/list.json"
     num = 0
@@ -118,7 +118,7 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
             zpData = data["zpData"]
             jobList = zpData["jobList"]
             for job in jobList:
-                jobinfo = convert_json_to_job(query.title, job, user_id, get_desc)
+                jobinfo = convert_json_to_job(query.title, job, user_id)
                 jobInfoList.append(jobinfo)
                 num += 1
                 if num >= query.limit:
@@ -137,6 +137,59 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
         time.sleep(3)
     return InsertDTO(user_id, jobInfoList, filter_hash, token)
 
+def get_job_list_with_desc(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None) -> InsertDTO:
+    url = "https://www.zhipin.com/wapi/zpgeek/pc/recommend/job/list.json"
+    num = 0
+    jobInfoList: List[JobInfo] = []
+    while True:
+        if job_status:
+            status = job_status.get(user_id, {}).get('running', 1)
+            if status == 0:
+                print("停止运行")
+                return InsertDTO(user_id, jobInfoList, filter_hash, token)
+        params = {
+            "page": 1,
+            "pageSize": "30",       # 最大是30
+            "city": query.city,
+            "jobType": query.jobType,
+            "salary": query.salary,
+            "experience": query.experience,
+            "degree": query.degree,
+            "industry": query.industry,
+            "scale": query.scale,
+            "query": query.query,
+            "position": query.position
+        }
+        if user_id is None:
+            user_id = get_user_id()
+        response = Request.get(user_id, url, params=params)
+        try:
+            data = response.json()
+        except:
+            logger.error(f"获取岗位列表失败，url: {url}, params: {params}")
+            return
+        if data["code"] == 0:
+            zpData = data["zpData"]
+            jobList = zpData["jobList"]
+            for job in jobList:
+                jobinfo = convert_json_to_job(query.title, job, user_id)
+                jobInfoList.append(jobinfo)
+                num += 1
+                if num >= query.limit:
+                    return InsertDTO(user_id, jobInfoList, filter_hash, token)
+            if zpData["hasMore"] == False:
+                params["page"] += 1
+            else:
+                break
+        else:
+            break
+        if job_status:
+            status = job_status.get(user_id, {}).get('running', 1)
+            if status == 0:
+                print("停止运行")
+                return InsertDTO(user_id, jobInfoList, filter_hash, token)
+        time.sleep(3)
+    return InsertDTO(user_id, jobInfoList, filter_hash, token)
 
 @inject_config("application.yml", "user")
 class GetJobs:    

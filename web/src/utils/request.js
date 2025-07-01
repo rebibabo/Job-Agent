@@ -31,19 +31,24 @@ let isRedirecting = false;
 service.interceptors.response.use(
     (response) => response.data,
     (error) => {
-        if (error.response.status === 401) {
-            if (!isRedirecting) {
-                isRedirecting = true;
-                alert("登录已过期，请重新登录");
-                store.state.user.token = ""; // 清空token
-                store.state.user.userInfo = {}; // 清空用户信息
-                router.push("/login").finally(() => {
-                    isRedirecting = false;
-                });
+        if (error.response) {
+            if (error.response.status === 401) {
+                if (!isRedirecting) {
+                    isRedirecting = true;
+                    alert("登录已过期，请重新登录");
+                    store.state.user.token = "";
+                    store.state.user.userInfo = {};
+                    router.push("/login").finally(() => {
+                        isRedirecting = false;
+                    });
+                }
             }
+        } else {
+            // 这里可选: 统一处理网络错误
+            console.error("请求未发送成功，服务器或网络故障：", error.message);
         }
         return Promise.reject(error);
     }
-);
+)
 
 export default service;

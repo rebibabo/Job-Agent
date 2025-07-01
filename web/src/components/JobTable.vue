@@ -14,13 +14,13 @@
             <el-table-column prop="title" sortable label="工作岗位" width="180" />
             <el-table-column prop="scale" sortable label="公司规模" width="150" />
             <el-table-column prop="stage" sortable label="融资阶段" width="150" />
-            <el-table-column label="操作">
+            <el-table-column label="操作"  min-width="180">
                 <template #default="{ row }">
                     <el-button @click="viewJob(row)" :type="row.sentCv ? 'success' : row.viewed ? 'info' : 'primary'"
                         size="mini" style="width: 70px;">
                         {{ row.sentCv ? '已投递' : row.viewed ? '已查看' : '查看' }}
                     </el-button>
-                    <el-button @click="confirmDelete([row.id])" type="danger" size="mini">删除</el-button>
+                    <el-button @click="confirmDelete([row.id])" type="danger" size="mini" style="width: 70px;">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>

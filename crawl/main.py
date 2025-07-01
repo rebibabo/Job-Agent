@@ -4,11 +4,15 @@ from crawler.query import JobQuery
 from database.connector import db_pool
 from utils.cache import CachedIterator
 from utils.tools import set_user_id
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, Response
 from constant import DEFAULT_USER_ID, ALREADY_RUN_CODE
 from loguru import logger
 import time
+import datetime
 import os
+import json
+import sys
+import shutil
 from multiprocessing import Process, Manager
 from agent.resume import ResumeLoader
 from agent.filter import GPTFilter
@@ -16,7 +20,7 @@ from agent.filter import GPTFilter
 app = Flask(__name__)
 
 # 本地跑
-def main():
+def crawl():
     user_id = set_user_id()
     resume = ResumeLoader("cache/1/resume/实习简历_袁忠升/实习简历_袁忠升.pdf")
     # titles = db_pool.execute('SELECT name FROM title WHERE type="互联网/AI"')
@@ -35,7 +39,8 @@ def main():
             title=title,
             limit=5
         )
-        insertDTO = get_job_list(query, user_id=user_id, get_desc=True)
+        print(query)
+        insertDTO = get_job_list(query, user_id=user_id)
         jobList.extend(insertDTO.jobs)
         
         insertDTO.commit_to_db()
@@ -46,7 +51,7 @@ def main():
     jobList = filter.filter(batch_size=3)
     print("过滤后的条数：", len(jobList))
     ranker = GPTRanker(jobList, resume.file_path)
-    jobList = ranker.rank(window_length=3, step=1)
+    jobList = ranker.rank(batch_size=3)
     for job in jobList:
         print(job.description)
         print('=====================================')
@@ -101,7 +106,7 @@ def run_crawler(data, job_status):
                 scale=scale,
                 stage=stage,
             )
-            insertDTO = get_job_list(query, job_status, user_id, filterHash, get_desc=get_desc)
+            insertDTO = get_job_list(query, job_status, user_id, filterHash)
             insertDTO.commit_to_db()
             progress = iterator.index / iterator.total * 100
             job_status[user_id] = {
@@ -187,13 +192,105 @@ def create_app(job_status):
         
         save_path = os.path.join(save_dir, file.filename)
         file.save(save_path)
+        with open(os.path.join(save_dir, "datetime.json"), "w") as f:
+            js = {"create": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}
+            f.write(json.dumps(js, indent=4))
         
         return jsonify({"message": "上传成功", "path": save_path}), 200
+
+    @app.route('/resume/<user_id>', methods=['GET'])
+    def get_resume_list(user_id):
+        # 检查文件
+        save_dir = os.path.join("cache", user_id, "resume")
+        if not os.path.exists(save_dir):
+            return jsonify({"message": "简历不存在"}), 404
+        
+        files = os.listdir(save_dir)
+        files_datetime = [{"name": x, "datetime": json.loads(open(os.path.join(save_dir, x, "datetime.json"), "r").read())["create"]} for x in files]
+        if not files:
+            return jsonify({"message": "简历不存在", "files": []}), 200
+        
+        return jsonify({"message": "简历列表", "files": files_datetime}), 200
+    
+    @app.route('/resume/view', methods=['POST'])
+    def view_resume():
+        data = request.get_json()
+        user_id = str(data.get('userId', DEFAULT_USER_ID))
+        file_name = data.get('file', '')
+        file_dir = os.path.join("cache", user_id, "resume", file_name)
+        file_path = os.path.join(file_dir, file_name + ".pdf")
+        print(file_path)
+        if not os.path.exists(file_path):
+            return {"code": 1, "msg": "文件不存在"}, 404
+        preview_url = f"/crawl/resume/{user_id}/{file_name}.pdf"
+        return {"code": 0, "url": preview_url}
+        
+    @app.route('/resume/delete', methods=['POST'])
+    def delete_resume():
+        # 检查文件
+        data = request.get_json()
+        user_id = str(data.get('userId', DEFAULT_USER_ID))
+        file_name = data.get('file', '')
+        save_dir = os.path.join("cache", user_id, "resume", file_name)
+        if not os.path.exists(save_dir):
+            return jsonify({"message": "简历不存在"}), 404
+        shutil.rmtree(save_dir)
+        return jsonify({"message": "删除成功"}), 200
+    
+    
+    @app.route('/resume/<user_id>/<file_name>.pdf')
+    def preview_resume(user_id, file_name):
+        file_dir = os.path.join("cache", user_id, "resume", file_name)
+        return send_from_directory(file_dir, file_name + ".pdf")
+    
+    def get_datetime(file_dir, key):
+        with open(os.path.join(file_dir, "datetime.json"), "r") as f:
+            js = json.loads(f.read())
+            return js.get(key, "")
+            
+    @app.route('/resume/parse/content', methods=['GET'])
+    def parse_resume():
+        user_id = request.args.get('userId')
+        file_name = request.args.get('file')
+        file_dir = os.path.join("cache", user_id, "resume", file_name)
+        file_path = os.path.join(file_dir, file_name + ".pdf")
+        if not os.path.exists(file_path):
+            return {"code": 1, "msg": "文件不存在"}, 404
+        
+        resume = ResumeLoader(file_path)
+        resume.content
+        return {"code": 0, "step": 1, "datetime": get_datetime(file_dir, "content")}
+
+    @app.route('/resume/parse/summary', methods=['GET'])
+    def parse_summary():
+        user_id = request.args.get('userId')
+        file_name = request.args.get('file')
+        file_dir = os.path.join("cache", user_id, "resume", file_name)
+        file_path = os.path.join(file_dir, file_name + ".pdf")
+        if not os.path.exists(file_path):
+            return {"code": 1, "msg": "文件不存在"}, 404
+        
+        resume = ResumeLoader(file_path)
+        resume.summary
+        return {"code": 0, "step": 2, "datetime": get_datetime(file_dir, "summary")}
+    
+    @app.route('/resume/parse/picture', methods=['GET'])
+    def parse_picture():
+        user_id = request.args.get('userId')
+        file_name = request.args.get('file')
+        file_dir = os.path.join("cache", user_id, "resume", file_name)
+        file_path = os.path.join(file_dir, file_name + ".pdf")
+        if not os.path.exists(file_path):
+            return {"code": 1, "msg": "文件不存在"}, 404
+        
+        resume = ResumeLoader(file_path)
+        resume.picture_path
+        return {"code": 0, "step": 3, "datetime": get_datetime(file_dir, "picture")}
 
     return app
     
 if __name__ == '__main__':
-    # main()
+    # crawl()
     manager = Manager()
     job_status = manager.dict()
     app = create_app(job_status)

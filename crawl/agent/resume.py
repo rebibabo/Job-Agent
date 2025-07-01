@@ -3,6 +3,8 @@ from langchain_community.document_loaders import PyMuPDFLoader
 from utils.llm import get_response, get_llm
 from PIL import Image
 import fitz
+import json
+import datetime
 import os
 
 class ResumeLoader:    
@@ -10,6 +12,13 @@ class ResumeLoader:
         self.file_path = os.path.abspath(file_path)
         self.file_name = os.path.basename(file_path)
         self.cache_dir = os.path.dirname(file_path)
+        
+    def update_time(self, key):
+        with open(os.path.join(self.cache_dir, 'datetime.json'), 'r') as f:
+                original_js = json.loads(f.read())
+        original_js[key] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        with open(os.path.join(self.cache_dir, 'datetime.json'), 'w', encoding='utf-8') as f:
+            f.write(json.dumps(original_js, indent=4))
         
     @property
     def content(self):
@@ -26,6 +35,7 @@ class ResumeLoader:
             
             with open(os.path.join(self.cache_dir, 'content.txt'), 'w', encoding='utf-8') as f:
                 f.write(content)
+            self.update_time('content')
             return content
         
     @property        
@@ -50,8 +60,9 @@ class ResumeLoader:
             ]
             LLM = get_llm(api_key=api_key, base_url=base_url)
             response = get_response(LLM, messages, max_tokens=max_length)
-            with open(os.path.join(self.cache_dir,'summary.txt'), 'w', encoding='utf-8') as f:
+            with open(os.path.join(self.cache_dir,'summary.md'), 'w', encoding='utf-8') as f:
                 f.write(response)
+            self.update_time('summary')
             return response
     
     @property
@@ -87,5 +98,6 @@ class ResumeLoader:
                 y_offset += img.height
             
             new_img.save(final_image_path)
+            self.update_time('picture')
             
         return final_image_path
