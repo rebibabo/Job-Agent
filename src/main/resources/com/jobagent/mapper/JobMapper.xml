@@ -109,14 +109,18 @@
 
     <select id="findJobWithoutDesc" resultType="java.lang.Integer">
         SELECT COUNT(*)
-        FROM job j, user_job u
-        WHERE j.jobName=#{whetherAddDescDTO.jobName}
-            AND j.city=#{whetherAddDescDTO.city}
-            AND j.companyId=#{whetherAddDescDTO.companyId}
-            AND j.description IS NOT NULL
-            AND j.id=u.job_id
-            AND u.user_id=#{whetherAddDescDTO.userId}
-            AND u.sent_cv=FALSE
+        FROM job j
+             LEFT JOIN user_job u ON j.id = u.job_id
+        WHERE
+            j.jobName = #{whetherAddDescDTO.jobName}
+          AND j.city = #{whetherAddDescDTO.city}
+          AND j.companyId = #{whetherAddDescDTO.companyId}
+          AND j.description IS NOT NULL
+          AND (
+            u.user_id = #{whetherAddDescDTO.userId}
+                AND u.sent_cv = FALSE
+                OR u.job_id IS NULL
+            )
     </select>
 
     <insert id="insertJob" parameterType="com.jobagent.entity.JobInfo" useGeneratedKeys="true" keyProperty="jobId">

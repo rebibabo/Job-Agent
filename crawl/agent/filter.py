@@ -3,11 +3,13 @@ from typing import List
 from utils.llm import get_response, get_llm
 from database.jobinfo import JobInfo
 from constant import DEFAULT_MODEL
+from loguru import logger
 
 class GPTFilter:
-    def __init__(self, jobinfo: List[JobInfo], query: str):
+    def __init__(self, jobinfo: List[JobInfo], query: str, max_retries: int = 3):
         self.jobinfo = jobinfo
         self.query = query
+        self.max_retries = max_retries
         
     def batch_filter(
         self,
@@ -33,18 +35,19 @@ class GPTFilter:
         messages.append({"role": "assistant", "content": "好的，我将根据你的要求进行岗位筛选。"})
         messages.append({"role": "user", "content": f"请对上面{num}个条招聘岗位进行筛选，返回符合条件的岗位列表，输出的格式应该是数字列表, eg., [0, 3, 5]。只要回答岗位列表，不要解释任何理由。"})
 
-        response = get_response(LLM, messages, model, temperature)
-        try:
-            indices = eval(response)
-            return [batch_job[i] for i in indices]
-        except:
-            print(f"Wrong response format: {response}")
-            return None
+        for _ in range(self.max_retries):
+            response = get_response(LLM, messages, model, temperature)
+            try:
+                indices = eval(response)
+                return [batch_job[i] for i in indices]
+            except:
+                logger.warning(f"Wrong response format: {response}, retry...")
 
     def filter(self, 
         batch_size: int=16, 
         model: str = DEFAULT_MODEL, 
         temperature: float = 0.5,
+        status=None,
         api_key: str = None,
         base_url: str = None,
     ) -> List[JobInfo]:
@@ -52,13 +55,13 @@ class GPTFilter:
         LLM = get_llm(api_key=api_key, base_url=base_url)
         for i in trange(0, len(self.jobinfo), batch_size):
             selected_job = None
-            for _ in range(3):
+            for _ in range(self.max_retries):
                 batch_job = self.jobinfo[i:i+batch_size]
                 selected_job = self.batch_filter(LLM, batch_job, model=model, temperature=temperature)
                 if selected_job:
                     ans.extend(selected_job)
                     break
             if selected_job is None:
-                print("Max retries reached, skipping...")
+                logger.warning("Max retries reached, skipping...")
                 continue
         return ans

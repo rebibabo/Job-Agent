@@ -12,6 +12,7 @@
             :currentPage="currentPage"
             :pageSize="pageSize"
             :totalNumber="totalNumber"
+            :deleteAll="false"
             @update:currentPage="currentPage = $event"
             @update:pageSize="pageSize = $event"
             @pagination-change="fetchJobList"

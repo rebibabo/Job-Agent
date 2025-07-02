@@ -32,6 +32,9 @@
             <el-button type="danger" @click="confirmDeleteSelected" :disabled="!selectedJobs.length" size="medium">
                 删除所选
             </el-button>
+            <el-button type="danger" @click="confirmDeleteAll" size="medium" v-if="deleteAll">
+                删除全部
+            </el-button>
         </div>
 
         <div style="flex: 1; display: flex; justify-content: center;">
@@ -50,16 +53,19 @@
   
 <script>
 import { nextTick } from 'vue'
-import { setViewStatusAPI, deleteAPI } from '@/api/job'
+import { setViewStatusAPI, deleteAPI, deleteALLAPI } from '@/api/job'
+import { getFiltersMD5 } from '@/utils/encrypt' 
 
 export default {
     name: 'JobTable',
     props: {
         jobList: { type: Array, required: true },
+        filters: { type: Object, required: false },
         currentPage: { type: Number, required: true },
         pageSize: { type: Number, required: true },
         totalNumber: { type: Number, required: true },
-        maxHeight: { type: [Number, String], default: 850 }
+        maxHeight: { type: [Number, String], default: 850 },
+        deleteAll: { type: Boolean, default: true }
     },
     emits: ['view', 'delete', 'send', 'update:currentPage', 'update:pageSize', 'pagination-change'],
     data() {
@@ -93,6 +99,21 @@ export default {
             this.$confirm('确认删除所选岗位？')
                 .then(() => {
                     deleteAPI({ user_id: String(this.$store.state.user.userInfo.id), job_ids: ids })
+                        .then(() => {
+                            this.$emit('pagination-change')
+                        })
+                        .catch(error => {
+                            this.$message.error(error.message || '删除失败')
+                        })
+                })
+                .catch(() => {
+                    this.$message.info('已取消删除')
+                })
+        },
+        confirmDeleteAll() {
+            this.$confirm('确认删除全部岗位？')
+                .then(() => {
+                    deleteALLAPI({ userId: this.$store.state.user.userInfo.id, filterHash: getFiltersMD5(this.filters) })
                         .then(() => {
                             this.$emit('pagination-change')
                         })

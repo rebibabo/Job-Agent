@@ -86,6 +86,13 @@ public class JobController {
         return Result.success();
     }
 
+    @PostMapping("/deleteFilter")
+    public Result deleteFilterJob(@RequestBody DeleteFilterJobDTO deleteFilterJobDTO) {
+        log.info("删除指定过滤规则的岗位: {}", deleteFilterJobDTO);
+        jobService.deleteFilterJob(deleteFilterJobDTO);
+        return Result.success();
+    }
+
     @PostMapping("/view")
     public Result setViewStatus(@RequestBody JobViewDTO jobViewDTO) {
         log.info("设置已查看状态: {}", jobViewDTO);

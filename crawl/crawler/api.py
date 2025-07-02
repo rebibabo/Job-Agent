@@ -42,7 +42,7 @@ def get_job_detail(securityId, user_id):
     data = response.json()
     if data["code"] == 0:
         jobDetail = data["zpData"]["jobInfo"]["postDescription"]
-        print(json.dumps(jobDetail, indent=4, ensure_ascii=False))
+        logger.info(json.dumps(jobDetail, indent=4, ensure_ascii=False))
         return jobDetail
     else:
         return None
@@ -92,19 +92,17 @@ def convert_json_to_job(title: str, js: dict) -> JobInfo:
     return jobinfo
     
 
-def get_job_list(query: JobQuery, user_id: str, job_status=None, filter_hash: str=None) -> InsertDTO:
+def get_job_list(query: JobQuery, user_id: str, status=None, filter_hash: str=None) -> InsertDTO:
     url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
     # url = "https://www.zhipin.com/wapi/zpgeek/pc/recommend/job/list.json"
     num = 0
     jobInfoList: List[JobInfo] = []
     params = query.to_params(page=random.randint(1, 10))
     while True:
-        if job_status:
-            status = job_status.get(user_id, {}).get('running', 1)
-            if status == 0:
-                print("停止运行")
-                return InsertDTO(user_id, jobInfoList, filter_hash)
-        print(params)
+        if status and status.get('running', 1) == 0:
+            logger.info("停止运行")
+            return InsertDTO(user_id, jobInfoList, filter_hash)
+        logger.info(params)
         response = Request.get(user_id, url, params=params)
         try:
             data = response.json()
@@ -126,15 +124,13 @@ def get_job_list(query: JobQuery, user_id: str, job_status=None, filter_hash: st
                 params["page"] = random.randint(1, params["page"]+10)
         else:
             break
-        if job_status:
-            status = job_status.get(user_id, {}).get('running', 1)
-            if status == 0:
-                print("停止运行")
-                return InsertDTO(user_id, jobInfoList, filter_hash)
+        if status and status.get('running', 1) == 0:
+            logger.info("停止运行")
+            return InsertDTO(user_id, jobInfoList, filter_hash)
         time.sleep(3)
     return InsertDTO(user_id, jobInfoList, filter_hash)
 
-def get_job_list_with_desc(query: JobQuery, user_id: str, job_status=None, increment: float=0, filter_hash: str=None) -> InsertDTO:
+def get_job_list_with_desc(query: JobQuery, user_id: str, status=None, increment: float=0, filter_hash: str=None) -> InsertDTO:
     url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
     num = 0
     jobInfoList: List[JobInfo] = []
@@ -143,12 +139,10 @@ def get_job_list_with_desc(query: JobQuery, user_id: str, job_status=None, incre
     params = query.to_params(page=1)
     
     while True:
-        if job_status:
-            status = job_status.get(user_id, {}).get('running', 1)
-            if status == 0:
-                print("停止运行")
-                return InsertDTO(user_id, jobInfoList, filter_hash)
-        print(params)
+        if status and status.get('running', 1) == 0:
+            logger.info("停止运行")
+            return InsertDTO(user_id, jobInfoList, filter_hash)
+        logger.info(params)
         response = Request.get(user_id, url, params=params)
         try:
             data = response.json()
@@ -171,18 +165,14 @@ def get_job_list_with_desc(query: JobQuery, user_id: str, job_status=None, incre
                     jobinfo.description_(description)
                     jobInfoList.append(jobinfo)
                     num += 1
-                    job_status[user_id] = {     # 粒度为每一条岗位，而不是以（城市、岗位类型）为单位
-                        **job_status[user_id],
-                        "percentage": job_status[user_id]["percentage"] + increment
-                    }
+                    status["percentage"] += increment
                     if num >= maxNum:
                         return InsertDTO(user_id, jobInfoList, filter_hash)
                     
-                if job_status:
-                    status = job_status.get(user_id, {}).get('running', 1)
-                    if status == 0:
-                        print("停止运行")
-                        return InsertDTO(user_id, jobInfoList, filter_hash)
+                if status and status.get('running', 1) == 0:
+                    logger.info("停止运行")
+                    return InsertDTO(user_id, jobInfoList, filter_hash)
+                
             if zpData["hasMore"] == True:
                 params["page"] += 1
             else:        # 没有更多数据，退出循环

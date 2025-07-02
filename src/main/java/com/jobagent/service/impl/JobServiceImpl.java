@@ -133,4 +133,9 @@ public class JobServiceImpl implements JobService {
         int result = jobMapper.findJobWithoutDesc(whetherAddDescDTO);
         return result == 0;
     }
+
+    @Override
+    public void deleteFilterJob(DeleteFilterJobDTO deleteFilterJobDTO) {
+        jobMapper.deleteFilterJob(deleteFilterJobDTO);
+    }
 }

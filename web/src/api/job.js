@@ -37,6 +37,10 @@ export const deleteAPI = (params) => {
     return request.post('/api/job/delete', params)
 }
 
+export const deleteALLAPI = (params) => {
+    return request.post('/api/job/deleteFilter', params)
+}
+
 export const setViewStatusAPI = (params) => {
     return request.post('/api/job/view', params)
 }

@@ -64,10 +64,13 @@ class TokenFetcher:
         page.close()
         return stoken
     
-    def __del__(self):
-        self.context.close()
-        self.browser.close()
-        self.playwright.stop()
+    def shutdown(self):
+        try:
+            self.context.close()
+            self.browser.close()
+            self.playwright.stop()
+        except Exception as e:
+            print(f"playwright shutdown error: {e}")
 
 if __name__ == '__main__':       
     fetcher = TokenFetcher()

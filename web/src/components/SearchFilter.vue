@@ -36,7 +36,7 @@
             <!-- 最大查询条数 -->
             <el-form-item label="最大条数/每城市/每岗位">
                 <el-select v-model="localFilters.limitNum" placeholder="最大条数" style="width: 120px;"
-                    @change="val => handleSelectChange('title', val)">
+                    @change="val => handleSelectChange('limitNum', val)">
                     <el-option v-for="item in limitList" :key="item" :label="item" :value="item" />
                 </el-select>
             </el-form-item>

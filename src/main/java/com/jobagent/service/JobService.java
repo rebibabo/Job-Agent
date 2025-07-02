@@ -35,4 +35,6 @@ public interface JobService {
     PageResult getJobList(JobListDTO jobListDTO);
 
     Boolean whetherAddDesc(WhetherAddDescDTO whetherAddDescDTO);
+
+    void deleteFilterJob(DeleteFilterJobDTO deleteJobDTO);
 }

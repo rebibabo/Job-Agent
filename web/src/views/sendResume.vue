@@ -77,7 +77,7 @@
                 <el-form label-width="0" inline>
 
                     <el-form-item>
-                        <el-button type="primary" @click="startJob">开始任务</el-button>
+                        <el-button type="primary" @click="() => startJob(true)">开始任务</el-button>
                     </el-form-item>
                     <el-form-item>
                         <el-button type="danger" @click="stopJob">停止任务</el-button>
@@ -88,6 +88,7 @@
 
                 <JobTable
                     :jobList="jobList"
+                    :filters="filters"
                     :currentPage="currentPage"
                     :pageSize="pageSize"
                     :totalNumber="totalNumber"
@@ -103,7 +104,22 @@
                 </div>
 
             </el-tab-pane>
-            <el-tab-pane label="过滤岗位" name="filter">过滤岗位</el-tab-pane>
+
+            <!-- 过滤岗位 -->
+            <el-tab-pane label="过滤岗位" name="filter">
+                <JobTable
+                    :jobList="jobList"
+                    :currentPage="currentPage"
+                    :pageSize="pageSize"
+                    :totalNumber="totalNumber"
+                    :maxHeight="600"
+                    @update:currentPage="currentPage = $event"
+                    @update:pageSize="pageSize = $event"
+                    @pagination-change="fetchJobList"
+                    ref="jobTableRef"
+                />
+
+            </el-tab-pane>
             <el-tab-pane label="匹配度排序" name="sort">匹配度排序</el-tab-pane>
             <el-tab-pane label="简历投递" name="deliver">简历投递</el-tab-pane>
         </el-tabs>
@@ -117,18 +133,15 @@ import {
     getResumeContentAPI, getResumeSummaryAPI, getResumePictureAPI
 } from '@/api/user'
 
-import axios from 'axios';
 import SearchFilter from "@/components/SearchFilter.vue";
 import JobTable from "@/components/JobTable.vue";
-import { getFiltersMD5 } from "@/utils/encrypt";
-import { jobListFilterAPI } from "@/api/job";
+import searchMethods from '@/utils/searchMethod.js';
 
 export default {
     name: "sendResume",
     components: { SearchFilter, JobTable },
     data() {
         return {
-            direction: 'rtl',
             activeTab: 'resume',
             progress: 0,
             resumeList: [],
@@ -139,7 +152,6 @@ export default {
             previewDialog: false,
             previewUrl: "",
             filters: {},
-            currentRow: null,
             selectedResume: null,
             startParsing: false,
             finish: false,
@@ -158,92 +170,7 @@ export default {
         };
     },
     methods: {
-        onSubmit() {
-            this.currentPage = 1;
-            this.fetchJobList();
-        },
-        onReset() {
-            this.filters = {};
-        },
-        startJob() {
-            // 清理可能残留的定时器
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
-            if (this.tableTimer) {
-                clearInterval(this.tableTimer);
-                this.tableTimer = null;
-            }
-            this.fetchJobList();
-
-            // 假设启动任务接口
-            this.status = null;
-            const params = {userId: this.$store.state.user.userInfo.id};
-            for (const key in this.filters) {
-                const value = this.filters[key];
-                if (Array.isArray(value) && value.length === 1 && value[0] === '不限') {
-                    params[key] = [];
-                } else {
-                    params[key] = value;
-                }
-            }
-            params.filterHash = getFiltersMD5(this.filters);
-            params.getDesc = true;      // 获取描述信息
-            axios.post('/crawl/joblist/start', params)
-                .then(() => {
-                    this.progress = 0;
-                    this.pollProgress();
-                    this.getJobTableTimer();
-                })
-                .catch((res) => {
-                    if (res.status === 410) {
-                        this.$message.warning('任务已启动，请勿重复启动');
-                    }
-                });
-        },
-        stopJob() {
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
-            if (this.tableTimer) {
-                clearInterval(this.tableTimer);
-                this.tableTimer = null;
-            }
-            axios.post('/crawl/joblist/stop', { userId: this.$store.state.user.userInfo.id })
-                .then(() => {
-                    this.status = 'exception';
-                });
-        },
-        pollProgress() {
-            // 定时向后端获取进度
-            this.timer = setInterval(() => {
-                axios.post('/crawl/joblist/progress', { userId: this.$store.state.user.userInfo.id })
-                    .then(response => {
-                        this.progress = response.data.percentage;
-                        if (this.progress < 0) {
-                            this.$message.error(response.data.error);
-                            clearInterval(this.timer);
-                            clearInterval(this.tableTimer);
-                        }
-                        else if (this.progress >= 100) {
-                            this.status = 'success';
-                            clearInterval(this.timer);
-                            clearInterval(this.tableTimer);
-                        }
-                    })
-                    .catch(() => {
-                        this.status = 'exception';
-                        clearInterval(this.timer);
-                    });
-            }, 1000); // 每1秒轮询一次
-        },
-        getJobTableTimer() {
-            this.tableTimer = setInterval(() => {
-                this.fetchJobList();
-            }, 10000); // 每10s更新一次
-        },
+        ...searchMethods,
         beforeUpload(file) {
             console.log(file.type, file.size)
             const isPDF = file.type === 'application/pdf';
@@ -337,13 +264,12 @@ export default {
             }
         },
         handleNext() {
-            this.finish = false;
             const tabOrder = ['resume', 'crawl', 'filter', 'sort', 'deliver'];
             const currentIndex = tabOrder.indexOf(this.activeTab);
             console.log("当前索引", currentIndex)
             if (currentIndex >= 0 && currentIndex < tabOrder.length - 1) {
                 this.activeTab = tabOrder[currentIndex + 1];
-                this.stepIndex += 1;
+                this.stepIndex = currentIndex + 1;
             }
         },
         async handleParse() {
@@ -379,24 +305,6 @@ export default {
                 this.startParsing = false;
             }
         },
-        async fetchJobList() {
-            try {
-                this.loading = true
-                const params = {
-                    userId: this.$store.state.user.userInfo.id,
-                    filterHash: getFiltersMD5(this.filters),
-                    page: this.currentPage,
-                    pageSize: this.pageSize
-                }
-                const response = await jobListFilterAPI(params)
-                this.jobList = response.data.items
-                this.totalNumber = response.data.total
-            } catch (error) {
-                this.$message.error(error.message || '请求职位列表失败')
-            } finally {
-                this.loading = false
-            }
-        },
     },
 
     mounted() {
@@ -405,10 +313,3 @@ export default {
 }
 
 </script>
-
-<style scoped>
-/* 针对 el-table 去掉最右边框 */
-.el-table::after {
-    display: none;
-}
-</style>
