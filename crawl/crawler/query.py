@@ -89,6 +89,22 @@ class JobQuery:
                 industries.append(results[0][0])
         self.industry = ','.join(industries)
 
+    def to_params(self, page):
+        params = {
+            "page": page,
+            "pageSize": "30",       # 最大是30
+            "city": self.city,
+            "jobType": self.jobType,
+            "salary": self.salary,
+            "experience": self.experience,
+            "degree": self.degree,
+            "industry": self.industry,
+            "scale": self.scale,
+            "query": self.query,
+            "position": self.position
+        }
+        return params
+
     def to_url(self):
         base_url = "https://www.zhipin.com/web/geek/job?"
         params = '&'.join([f'{k}={v}' for k, v in self.to_dict().items() if v])

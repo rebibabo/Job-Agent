@@ -3,28 +3,42 @@ from crawler.query import JobQuery
 from agent.resume import ResumeLoader
 from crawler.token import login
 from playwright.sync_api import sync_playwright
-from database.jobinfo import InsertDTO, JobInfo
+from database.jobinfo import InsertDTO, JobInfo, WhetherAddDescDTO
 from uiautomation import WindowControl
-from utils.tools import get_user_id
 from typing import List
 from loguru import logger
-from constant import LOGIN_URL, QUERY_URL, LIST_URL
+from constant import LIST_URL, TOKEN_EXPIRED_CODE
 from utils.configLoader import inject_config
-from utils.tools import md5_encrypt
+from crawler.requestHelper import list_all_cookies
+from utils.tools import get_headers
 import datetime
 import requests
 import random
 import time
 import json
 
-def get_job_detail(securityId, user_id=None):
-    if user_id is None:
-        user_id = get_user_id()
+def get_job_detail(securityId, user_id):
     url = "https://www.zhipin.com/wapi/zpgeek/job/detail.json"
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-GB,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,en-US;q=0.6",
+        "Connection": "keep-alive",
+        "Referer": "https://www.zhipin.com/web/geek/jobs",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0",
+        "X-Requested-With": "XMLHttpRequest",
+        "sec-ch-ua": "\"Microsoft Edge\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "traceId": "F-02158feHPbzT4n6W"
+    }
     params = {
         "securityId": securityId,
     }
-    response = Request.get(user_id, url, params=params)
+    cookies = list_all_cookies(f"cache/{user_id}")
+    response = requests.get(url, headers=headers, cookies=cookies, params=params)
     data = response.json()
     if data["code"] == 0:
         jobDetail = data["zpData"]["jobInfo"]["postDescription"]
@@ -33,7 +47,7 @@ def get_job_detail(securityId, user_id=None):
     else:
         return None
     
-def convert_json_to_job(title: str, js: dict, user_id=None, get_desc: bool=False) -> JobInfo:
+def convert_json_to_job(title: str, js: dict) -> JobInfo:
     jobinfo = JobInfo()
     jobinfo.securityId_(js["securityId"]).jobName_(js["jobName"]).jobType_(js["jobType"]).salary_(js["salaryDesc"])\
         .crawlDate_(datetime.datetime.now().strftime("%Y-%m-%d")).city_(js["cityName"]).region_(js["areaDistrict"]).experience_(js["jobExperience"])\
@@ -73,41 +87,24 @@ def convert_json_to_job(title: str, js: dict, user_id=None, get_desc: bool=False
         salaryCeiling = 0
         
     jobinfo.salaryCeiling_(int(salaryCeiling)).salaryFloor_(int(salaryFloor))
-    if get_desc:
-        description = get_job_detail(jobinfo.securityId, user_id)
-        time.sleep(0.5)
-        if description:
-            jobinfo.description_(description)
+    
     logger.info(f"{jobinfo.title} | {jobinfo.jobName} | {jobinfo.city} | {jobinfo.companyName}")
     return jobinfo
     
 
-def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None) -> InsertDTO:
-    # url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
-    url = "https://www.zhipin.com/wapi/zpgeek/pc/recommend/job/list.json"
+def get_job_list(query: JobQuery, user_id: str, job_status=None, filter_hash: str=None) -> InsertDTO:
+    url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
+    # url = "https://www.zhipin.com/wapi/zpgeek/pc/recommend/job/list.json"
     num = 0
     jobInfoList: List[JobInfo] = []
+    params = query.to_params(page=random.randint(1, 10))
     while True:
         if job_status:
             status = job_status.get(user_id, {}).get('running', 1)
             if status == 0:
                 print("停止运行")
-                return InsertDTO(user_id, jobInfoList, filter_hash, token)
-        params = {
-            "page": random.randint(1, 10),
-            "pageSize": "30",       # 最大是30
-            "city": query.city,
-            "jobType": query.jobType,
-            "salary": query.salary,
-            "experience": query.experience,
-            "degree": query.degree,
-            "industry": query.industry,
-            "scale": query.scale,
-            "query": query.query,
-            "position": query.position
-        }
-        if user_id is None:
-            user_id = get_user_id()
+                return InsertDTO(user_id, jobInfoList, filter_hash)
+        print(params)
         response = Request.get(user_id, url, params=params)
         try:
             data = response.json()
@@ -118,11 +115,11 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
             zpData = data["zpData"]
             jobList = zpData["jobList"]
             for job in jobList:
-                jobinfo = convert_json_to_job(query.title, job, user_id)
+                jobinfo = convert_json_to_job(query.title, job)
                 jobInfoList.append(jobinfo)
                 num += 1
                 if num >= query.limit:
-                    return InsertDTO(user_id, jobInfoList, filter_hash, token)
+                    return InsertDTO(user_id, jobInfoList, filter_hash)
             if zpData["hasMore"] == False:
                 params["page"] = random.randint(1, max(2, params["page"]-5))        # 使用随机页数避免重复抓取
             else:
@@ -133,75 +130,80 @@ def get_job_list(query: JobQuery, job_status=None, user_id: str=None, filter_has
             status = job_status.get(user_id, {}).get('running', 1)
             if status == 0:
                 print("停止运行")
-                return InsertDTO(user_id, jobInfoList, filter_hash, token)
+                return InsertDTO(user_id, jobInfoList, filter_hash)
         time.sleep(3)
-    return InsertDTO(user_id, jobInfoList, filter_hash, token)
+    return InsertDTO(user_id, jobInfoList, filter_hash)
 
-def get_job_list_with_desc(query: JobQuery, job_status=None, user_id: str=None, filter_hash: str=None, token: str=None) -> InsertDTO:
-    url = "https://www.zhipin.com/wapi/zpgeek/pc/recommend/job/list.json"
+def get_job_list_with_desc(query: JobQuery, user_id: str, job_status=None, increment: float=0, filter_hash: str=None) -> InsertDTO:
+    url = "https://www.zhipin.com/wapi/zpgeek/search/joblist.json"
     num = 0
     jobInfoList: List[JobInfo] = []
+    maxNum = query.limit
+    wad = WhetherAddDescDTO(user_id)
+    params = query.to_params(page=1)
+    
     while True:
         if job_status:
             status = job_status.get(user_id, {}).get('running', 1)
             if status == 0:
                 print("停止运行")
-                return InsertDTO(user_id, jobInfoList, filter_hash, token)
-        params = {
-            "page": 1,
-            "pageSize": "30",       # 最大是30
-            "city": query.city,
-            "jobType": query.jobType,
-            "salary": query.salary,
-            "experience": query.experience,
-            "degree": query.degree,
-            "industry": query.industry,
-            "scale": query.scale,
-            "query": query.query,
-            "position": query.position
-        }
-        if user_id is None:
-            user_id = get_user_id()
+                return InsertDTO(user_id, jobInfoList, filter_hash)
+        print(params)
         response = Request.get(user_id, url, params=params)
         try:
             data = response.json()
         except:
-            logger.error(f"获取岗位列表失败，url: {url}, params: {params}")
+            logger.error(f"获取岗位列表失败，params: {params}")
             return
         if data["code"] == 0:
             zpData = data["zpData"]
             jobList = zpData["jobList"]
             for job in jobList:
-                jobinfo = convert_json_to_job(query.title, job, user_id)
-                jobInfoList.append(jobinfo)
-                num += 1
-                if num >= query.limit:
-                    return InsertDTO(user_id, jobInfoList, filter_hash, token)
-            if zpData["hasMore"] == False:
+                jobinfo = convert_json_to_job(query.title, job)
+                # 判断是否存在岗位且description不为空且没有发送过简历
+                if not wad.get_result(jobinfo.jobName, jobinfo.city, jobinfo.companyId):
+                    logger.info("跳过该岗位")
+                    continue 
+                # 获取岗位描述信息
+                description = get_job_detail(jobinfo.securityId, user_id)
+                time.sleep(0.5)
+                if description:
+                    jobinfo.description_(description)
+                    jobInfoList.append(jobinfo)
+                    num += 1
+                    job_status[user_id] = {     # 粒度为每一条岗位，而不是以（城市、岗位类型）为单位
+                        **job_status[user_id],
+                        "percentage": job_status[user_id]["percentage"] + increment
+                    }
+                    if num >= maxNum:
+                        return InsertDTO(user_id, jobInfoList, filter_hash)
+                    
+                if job_status:
+                    status = job_status.get(user_id, {}).get('running', 1)
+                    if status == 0:
+                        print("停止运行")
+                        return InsertDTO(user_id, jobInfoList, filter_hash)
+            if zpData["hasMore"] == True:
                 params["page"] += 1
-            else:
+            else:        # 没有更多数据，退出循环
                 break
         else:
             break
-        if job_status:
-            status = job_status.get(user_id, {}).get('running', 1)
-            if status == 0:
-                print("停止运行")
-                return InsertDTO(user_id, jobInfoList, filter_hash, token)
+        
         time.sleep(3)
-    return InsertDTO(user_id, jobInfoList, filter_hash, token)
+    return InsertDTO(user_id, jobInfoList, filter_hash)
 
 @inject_config("application.yml", "user")
 class GetJobs:    
-    def __init__(self):
-        response = requests.post(LOGIN_URL, json={"username": self.config["username"], "password": md5_encrypt(self.config["password"])})
-        self.headers = {"token": response.json()["data"]["token"]}
+    def __init__(self, user_id: str):
+        self.user_id = user_id
+        self.headers = get_headers(user_id)
     
-    def get_jobs_by_ids(self, job_ids: List[int], user_id: str=None, max_num: int=100) -> List[JobInfo]:
+    def get_jobs_by_ids(self, job_ids: List[int], max_num: int=100) -> List[JobInfo]:
         params = {
             "jobIds": ",".join(map(str, job_ids)),
             "maxNum": max_num,
-            "userId": user_id or get_user_id()
+            "userId": self.user_id
         }
         response = requests.post(LIST_URL, json=params, headers=self.headers)
         if response.status_code == 200:
@@ -211,8 +213,10 @@ class GetJobs:
                 jobinfo = JobInfo.from_dict(job)
                 jobList.append(jobinfo)
             return jobList
-        else:
-            return []
+        elif response.status_code == TOKEN_EXPIRED_CODE:
+            logger.info("token失效，重新登录")
+            self.headers = get_headers(self.user_id, reload=True)
+            return self.get_jobs_by_ids(job_ids, max_num)
 
 def send_cv(user_id, jobs: List[JobInfo], cv_path, message):
     cache_dir = f"cache/{user_id}"

@@ -33,4 +33,6 @@ public interface JobService {
     String insertJobs(InsertJobsDTO insertJobsDTO);
 
     PageResult getJobList(JobListDTO jobListDTO);
+
+    Boolean whetherAddDesc(WhetherAddDescDTO whetherAddDescDTO);
 }

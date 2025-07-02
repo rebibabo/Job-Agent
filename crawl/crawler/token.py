@@ -32,10 +32,11 @@ def login(browser, cache_dir):
         exit()
             
     if page.locator(".header-login-btn[ka=header-login]").count() > 0:  # 没有登录
-        page.goto("https://www.zhipin.com/web/user/?ka=header-login", wait_until="networkidle")
-        if page.locator(".mini-app-login").count() == 0:
-            logger.info("使用微信扫码登录")
-            page.locator(".wx-login-btn").click()       # 选择微信扫码登录
+        page.goto("https://www.zhipin.com/web/user/?ka=header-login")
+        page.wait_for_timeout(3000)
+        # if page.locator(".mini-app-login").count() == 0:
+        #     logger.info("使用微信扫码登录")
+        #     page.locator(".wx-login-btn").click()       # 选择微信扫码登录
         
         if wait_for_disappear(page, '.mini-app-login', "等待登录中..."):
             context.storage_state(path=f"{cache_dir}/state.json")

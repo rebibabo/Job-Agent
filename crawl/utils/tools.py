@@ -2,6 +2,8 @@ from constant import *
 import hashlib
 import random
 import string
+import requests
+import yaml
 import os
 
 def get_param_hash(*args):
@@ -45,11 +47,17 @@ def generate_random_id(length):
     """生成随机ID，长度为length，字符集为0-9a-zA-Z"""
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-def set_user_id(userId=DEFAULT_USER_ID):
-    if not os.path.exists(f"cache/{userId}"):
-        os.makedirs(f"cache/{userId}")
-    os.environ[USER_ID_NAME] = userId
-    return userId
-
-def get_user_id():
-    return DEFAULT_USER_ID
+def get_headers(user_id, reload=False):
+    user_id = str(user_id)
+    cache_path = os.path.join("cache", user_id, "headers.json")
+    if os.path.exists(cache_path) and not reload:
+        return json.loads(open(cache_path, "r").read())
+    else:
+        with open("application.yml", "r", encoding="utf-8") as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)["user"]
+        response = requests.post(LOGIN_URL, json={"username": config["username"], "password": md5_encrypt(config["password"])})
+        headers = {"token": response.json()["data"]["token"]}
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        with open(cache_path, "w") as f:
+            f.write(json.dumps(headers))
+        return headers

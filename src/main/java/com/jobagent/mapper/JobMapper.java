@@ -62,4 +62,7 @@ public interface JobMapper {
     void updateDescription(JobInfo job);
 
     Page<Job> getJobList(@Param("jobListDTO") JobListDTO jobListDTO);
+
+    int findJobWithoutDesc(@Param("whetherAddDescDTO") WhetherAddDescDTO whetherAddDescDTO);
+
 }

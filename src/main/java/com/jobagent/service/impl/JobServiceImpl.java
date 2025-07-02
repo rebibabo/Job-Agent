@@ -127,4 +127,10 @@ public class JobServiceImpl implements JobService {
         pageResult._hasNext(pageNo, pageSize);
         return pageResult;
     }
+
+    @Override
+    public Boolean whetherAddDesc(WhetherAddDescDTO whetherAddDescDTO) {
+        int result = jobMapper.findJobWithoutDesc(whetherAddDescDTO);
+        return result == 0;
+    }
 }

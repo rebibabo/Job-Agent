@@ -27,7 +27,7 @@
 
             <!-- 工作岗位 -->
             <el-form-item label="工作岗位">
-                <el-select v-model="localFilters.title" multiple placeholder="工作岗位" style="width: 690px;"
+                <el-select v-model="localFilters.title" multiple placeholder="工作岗位" style="width: 640px;"
                     @change="val => handleSelectChange('title', val)">
                     <el-option v-for="item in titleList" :key="item" :label="item" :value="item" />
                 </el-select>
@@ -67,7 +67,7 @@
 
             <!-- 关键词 -->
             <el-form-item label="关键词" label-width="68px">
-                <el-input v-model="localFilters.keyword" placeholder="请输入关键词" style="width: 684px;" />
+                <el-input v-model="localFilters.keyword" placeholder="请输入关键词" style="width: 634px;" />
             </el-form-item>
             <!-- 按钮 -->
             <el-form-item>

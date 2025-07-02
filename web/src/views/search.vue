@@ -43,7 +43,6 @@ export default {
     data() {
         return {
             progress: 0,
-            loading: false,
             jobList: [],
             status: null,
             timer: null,
@@ -142,7 +141,6 @@ export default {
         },
         async fetchJobList() {
             try {
-                this.loading = true
                 const params = {
                     userId: this.$store.state.user.userInfo.id,
                     filterHash: getFiltersMD5(this.filters),
@@ -154,8 +152,6 @@ export default {
                 this.totalNumber = response.data.total
             } catch (error) {
                 this.$message.error(error.message || '请求职位列表失败')
-            } finally {
-                this.loading = false
             }
         },
     },
@@ -163,9 +159,6 @@ export default {
         if (this.timer) {
             clearInterval(this.timer);
         }
-    },
-    mounted() {
-        this.fetchJobList();
     }
 }
 </script>

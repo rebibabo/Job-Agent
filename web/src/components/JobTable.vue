@@ -8,8 +8,8 @@
             <el-table-column prop="salary" sortable label="薪资" width="180" />
             <el-table-column prop="city" sortable label="工作城市" width="150" />
             <el-table-column prop="region" sortable label="城市区域" width="150" />
-            <el-table-column prop="experience" sortable label="经验要求" width="180" />
-            <el-table-column prop="degree" sortable label="学历要求" width="150" />
+            <el-table-column prop="experience" sortable label="经验要求" width="150" />
+            <el-table-column prop="degree" sortable label="学历要求" width="140" />
             <el-table-column prop="industry" sortable label="公司行业" width="180" />
             <el-table-column prop="title" sortable label="工作岗位" width="180" />
             <el-table-column prop="scale" sortable label="公司规模" width="150" />

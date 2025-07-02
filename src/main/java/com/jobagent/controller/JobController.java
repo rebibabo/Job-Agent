@@ -107,4 +107,11 @@ public class JobController {
         return Result.success(pageResult);
     }
 
+    @PostMapping("/desc")
+    public Result<Boolean> whetherAddDesc(@RequestBody WhetherAddDescDTO whetherAddDescDTO) {
+        log.info("查询是否添加带有描述的岗位{}", whetherAddDescDTO);
+        Boolean result = jobService.whetherAddDesc(whetherAddDescDTO);
+        return Result.success(result);
+    }
+
 }

@@ -107,6 +107,18 @@
             AND u.job_id = j.id
     </select>
 
+    <select id="findJobWithoutDesc" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM job j, user_job u
+        WHERE j.jobName=#{whetherAddDescDTO.jobName}
+            AND j.city=#{whetherAddDescDTO.city}
+            AND j.companyId=#{whetherAddDescDTO.companyId}
+            AND j.description IS NOT NULL
+            AND j.id=u.job_id
+            AND u.user_id=#{whetherAddDescDTO.userId}
+            AND u.sent_cv=FALSE
+    </select>
+
     <insert id="insertJob" parameterType="com.jobagent.entity.JobInfo" useGeneratedKeys="true" keyProperty="jobId">
         INSERT INTO job (
             securityId,

@@ -51,10 +51,10 @@ class Request:
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0",
         "x-requested-with": "XMLHttpRequest"
     }
-    cookies = list_all_cookies("cache/1")
+    cookies = None
 
     fetcher = None
-    max_retry = 50
+    max_retry = 5
     request_cnt = max_retry
 
     @classmethod
@@ -66,6 +66,7 @@ class Request:
     @staticmethod
     def update_zp_token(user_id):
         fetcher = Request.get_fetcher(user_id)
+        Request.cookies = list_all_cookies(f"cache/{user_id}")
         Request.cookies["__zp_stoken__"] = fetcher.get_token()
         
     

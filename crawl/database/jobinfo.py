@@ -1,8 +1,8 @@
 from datetime import datetime
-from utils.tools import builder, md5_encrypt 
+from utils.tools import builder 
 from typing import List
-from constant import INSERT_URL, LOGIN_URL
-from utils.configLoader import inject_config
+from constant import INSERT_URL, TOKEN_EXPIRED_CODE, DESC_URL
+from utils.tools import get_headers
 from loguru import logger
 import requests
 
@@ -60,19 +60,12 @@ class JobInfo:
             str += f'{attr}: {self.__dict__[attr]}\n'
         return str + '\n'
 
-@inject_config("application.yml", "user")
-class InsertDTO:
-    token: str
-    
-    def __init__(self, userId: str, jobs: List[JobInfo], filterHash: str, token: str=None):
+class InsertDTO:    
+    def __init__(self, userId: str, jobs: List[JobInfo], filterHash: str):
         self.userId = userId
         self.jobs = jobs
         self.filterHash = filterHash or ""
-        self.get_token()
-            
-    def get_token(self):
-        response = requests.post(LOGIN_URL, json={"username": self.config["username"], "password": md5_encrypt(self.config["password"])})
-        InsertDTO.token = response.json()["data"]["token"]
+        self.headers = get_headers(userId)       
             
     def commit_to_db(self):
         params = {
@@ -80,15 +73,33 @@ class InsertDTO:
             "filterHash": self.filterHash,
             "jobs": [job.to_dict() for job in self.jobs],
         }
-        headers = {
-            "token": InsertDTO.token
-        }
-        response = requests.post(INSERT_URL, json=params, headers=headers)
+        response = requests.post(INSERT_URL, json=params, headers=self.headers)
         if response.status_code == 200:
             logger.success(response.json()["data"])
             return True
-        elif response.status_code == 401:
-            print("登录已过期，重新登录")
-            self.get_token()
+        elif response.status_code == TOKEN_EXPIRED_CODE:
+            self.headers = get_headers(self.userId, reload=True)
             self.commit_to_db()
         return False
+    
+class WhetherAddDescDTO:
+    def __init__(self, userId: str):
+        self.userId = str(userId)
+        self.headers = get_headers(userId)
+        
+    def get_result(self, jobName, city, companyId) -> bool:
+        params = {
+            "userId": self.userId,
+            "jobName": jobName,
+            "city": city,
+            "companyId": companyId
+        }
+        response = requests.post(DESC_URL, json=params, headers=self.headers)
+        if response.status_code == 200:
+            result = response.json()["data"]
+            return result
+        elif response.status_code == TOKEN_EXPIRED_CODE:
+            self.headers = get_headers(self.userId, reload=True)
+            return self.get_result()
+    
+    
