@@ -83,23 +83,17 @@
                         <el-button type="danger" @click="stopJob">停止任务</el-button>
                     </el-form-item>
 
-                    <el-progress :percentage="progress" :status="status" />
                 </el-form>
 
-                <JobTable
-                    :jobList="jobList"
-                    :filters="filters"
-                    :currentPage="currentPage"
-                    :pageSize="pageSize"
-                    :totalNumber="totalNumber"
-                    :maxHeight="600"
-                    @update:currentPage="currentPage = $event"
-                    @update:pageSize="pageSize = $event"
-                    @pagination-change="fetchJobList"
-                    ref="jobTableRef"
-                />
+                <el-progress :percentage="progress" :status="status" />
+                <br>
 
-                <div v-if="timer === null && jobList.length !== 0" style="display: flex; justify-content: center; margin-top: 20px;">
+                <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
+                    :totalNumber="totalNumber" :maxHeight="600" @update:currentPage="currentPage = $event"
+                    @update:pageSize="pageSize = $event" @pagination-change="fetchJobList" ref="jobTableRef" />
+
+                <div v-if="timer === null && jobList.length !== 0"
+                    style="display: flex; justify-content: center; margin-top: 20px;">
                     <el-button type="primary" @click="handleNext" style="margin-left: 40px;">下一步</el-button>
                 </div>
 
@@ -107,17 +101,73 @@
 
             <!-- 过滤岗位 -->
             <el-tab-pane label="过滤岗位" name="filter">
-                <JobTable
-                    :jobList="jobList"
-                    :currentPage="currentPage"
-                    :pageSize="pageSize"
-                    :totalNumber="totalNumber"
-                    :maxHeight="600"
-                    @update:currentPage="currentPage = $event"
-                    @update:pageSize="pageSize = $event"
-                    @pagination-change="fetchJobList"
-                    ref="jobTableRef"
-                />
+
+                <el-form :model="filterForm" :inline="true">
+                    <el-form-item label-width="120px">
+                        <template #label>
+                            批处理大小
+                            <el-tooltip class="item" effect="dark" content="每次处理的岗位数量，越大处理速度越快，但可能会影响准确性。" placement="top">
+                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                            </el-tooltip>
+                        </template>
+                        <el-slider v-model="filterForm.batchSize" style="width: 300px;" :step="10"
+                            :format-tooltip="formatBatchSize"></el-slider>
+                    </el-form-item>
+
+                    <el-form-item label-width="120px">
+                        <template #label>
+                            过滤规则
+                            <el-tooltip class="item" effect="dark" content="筛选掉不符合过滤要求的职位，包括实习/全职、学历要求、岗位要求、公司要求、地点要求等。"
+                                placement="top">
+                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                            </el-tooltip>
+                        </template>
+                        <el-input v-model="filterForm.filterQuery" placeholder="请输入过滤规则" style="width: 600px;" />
+                    </el-form-item>
+
+
+                </el-form>
+
+                <el-form :model="filterForm" :inline="true">
+                    <el-form-item label-width="120px">
+                        <template #label>
+                            温度
+                            <el-tooltip class="item" effect="dark" content="温度用于控制生成的随机性，值越大回答越发散，越小则更确定。" placement="top">
+                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                            </el-tooltip>
+                        </template>
+                        <el-slider v-model="filterForm.temperature" style="width: 300px;" :step="5"
+                            :format-tooltip="formatTemperature" />
+                    </el-form-item>
+
+
+                    <el-form-item label="选择模型" label-width="120px">
+                        <el-select v-model="filterForm.model" placeholder="请选择模型"
+                            style="width: 300px; margin-right: 192px;">
+                            <el-option v-for="item in models" :key="item" :label="item" :value="item">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+
+                </el-form>
+
+                <el-form label-width="0" inline>
+                    <el-form-item>
+                        <el-button type="primary" @click="handleFilter">开始过滤</el-button>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="danger" @click="stopJob">停止任务</el-button>
+                    </el-form-item>
+
+                    
+                </el-form>
+                
+                <br><br>
+                <el-progress :percentage="progress" :status="status" />
+                <br>
+                <JobTable :jobList="jobList" :currentPage="currentPage" :pageSize="pageSize" :totalNumber="totalNumber"
+                    :maxHeight="600" @update:currentPage="currentPage = $event" @update:pageSize="pageSize = $event"
+                    @pagination-change="fetchJobList" ref="jobTableRef" />
 
             </el-tab-pane>
             <el-tab-pane label="匹配度排序" name="sort">匹配度排序</el-tab-pane>
@@ -136,6 +186,9 @@ import {
 import SearchFilter from "@/components/SearchFilter.vue";
 import JobTable from "@/components/JobTable.vue";
 import searchMethods from '@/utils/searchMethod.js';
+import { getFiltersMD5 } from '@/utils/encrypt';
+import { getFilterJobAPI, startFilterAPI } from '@/api/job';
+import axios from 'axios';
 
 export default {
     name: "sendResume",
@@ -143,10 +196,10 @@ export default {
     data() {
         return {
             activeTab: 'resume',
-            progress: 0,
             resumeList: [],
             jobList: [],
             status: null,
+            progress: 0,
             timer: null,
             tableTimer: null,
             previewDialog: false,
@@ -158,6 +211,14 @@ export default {
             currentPage: 1,
             pageSize: 40,
             totalNumber: 0,
+            tabOrder: ['resume', 'crawl', 'filter', 'sort', 'deliver'],
+            models: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo', 'deepseek-r1'],
+            filterForm: {
+                filterQuery: "",
+                batchSize: 50,
+                model: 'gpt-4o-mini',
+                temperature: 25
+            },
             activities: [{
                 content: '提取文本',
             }, {
@@ -171,6 +232,12 @@ export default {
     },
     methods: {
         ...searchMethods,
+        formatBatchSize(val) {
+            return val / 10 + 5;
+        },
+        formatTemperature(val) {
+            return val / 50;
+        },
         beforeUpload(file) {
             console.log(file.type, file.size)
             const isPDF = file.type === 'application/pdf';
@@ -263,12 +330,14 @@ export default {
                 this.selectedResume = selection[0] || null;
             }
         },
+        getCurrentIndex() {
+            return this.tabOrder.indexOf(this.activeTab);
+        },
         handleNext() {
-            const tabOrder = ['resume', 'crawl', 'filter', 'sort', 'deliver'];
-            const currentIndex = tabOrder.indexOf(this.activeTab);
+            const currentIndex = this.getCurrentIndex();
             console.log("当前索引", currentIndex)
-            if (currentIndex >= 0 && currentIndex < tabOrder.length - 1) {
-                this.activeTab = tabOrder[currentIndex + 1];
+            if (currentIndex >= 0 && currentIndex < this.tabOrder.length - 1) {
+                this.activeTab = this.tabOrder[currentIndex + 1];
                 this.stepIndex = currentIndex + 1;
             }
         },
@@ -305,10 +374,77 @@ export default {
                 this.startParsing = false;
             }
         },
+        handleFilter() {
+            if (this.timer) {
+                clearInterval(this.timer);
+                this.timer = null;
+            }
+            this.status = null;
+            var params = { userId: this.$store.state.user.userInfo.id, filterHash: getFiltersMD5(this.filters) };
+            getFilterJobAPI(params).then(res => {
+                params = {
+                    "userId": this.$store.state.user.userInfo.id,
+                    "jobs": res.data,
+                    "filterQuery": this.filterForm.filterQuery,
+                    "batchSize": this.formatBatchSize(this.filterForm.batchSize),
+                    "model": this.filterForm.model,
+                    "temperature": this.formatTemperature(this.filterForm.temperature),
+                }
+                console.log(params);
+                this.progress = 0;
+                this.pollProgress();
+                startFilterAPI(params).then(res => {
+                    console.log("开始过滤", res);
+                }).catch(err => {
+                    if (err.status === 410) {
+                        this.$message.warning('任务已启动，请勿重复启动');
+                    }
+                    else {
+                        console.error("过滤出错", err);
+                    }
+                });
+
+            }).catch(err => {
+                console.error("过滤出错", err);
+            });
+
+        },
+        pollProgress() {
+            // 定时向后端获取进度
+            this.timer = setInterval(() => {
+                axios.get('/crawl/progress')
+                    .then(response => {
+                        this.progress = response.data.percentage;
+                        const results = response.data.results
+                        console.log(results);
+                        if (this.progress < 0) {
+                            this.$message.error(response.data.error);
+                            clearInterval(this.timer);
+                            clearInterval(this.tableTimer);
+                        }
+                        else if (this.progress >= 100) {
+                            this.status = 'success';
+                            clearInterval(this.timer);
+                            clearInterval(this.tableTimer);
+                            this.fetchJobList();
+                                
+                        }
+                    })
+                    .catch(() => {
+                        this.status = 'exception';
+                        clearInterval(this.timer);
+                    });
+            }, 1000); // 每1秒轮询一次
+        },
     },
 
     mounted() {
         this.getResumeList();
+    },
+    beforeDestroy() {
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
     }
 }
 

@@ -7,10 +7,11 @@ from database.jobinfo import InsertDTO, JobInfo, WhetherAddDescDTO
 from uiautomation import WindowControl
 from typing import List
 from loguru import logger
-from constant import LIST_URL, TOKEN_EXPIRED_CODE
+from constant import LIST_URL, TOKEN_EXPIRED_CODE, SETSTATUS_URL
 from utils.configLoader import inject_config
 from crawler.requestHelper import list_all_cookies
 from utils.tools import get_headers
+from agent.filter import GPTFilter
 import datetime
 import requests
 import random
@@ -208,7 +209,15 @@ class GetJobs:
             self.headers = get_headers(self.user_id, reload=True)
             return self.get_jobs_by_ids(job_ids, max_num)
 
-def send_cv(user_id, jobs: List[JobInfo], cv_path, message):
+def set_sent_status(user_id, job_id):
+    params = {
+        "job_id": job_id,
+        "user_id": user_id
+    }
+    headers = get_headers(user_id, reload=True)
+    requests.post(SETSTATUS_URL, json=params, headers=headers)
+    
+def send_cv(user_id, jobs: List[JobInfo], cv_path, message, status=None):
     cache_dir = f"cache/{user_id}"
     playwright = sync_playwright().start()
     browser = playwright.chromium.launch(headless=False)
@@ -216,7 +225,7 @@ def send_cv(user_id, jobs: List[JobInfo], cv_path, message):
     png_path = loader.picture_path
     context = login(browser, cache_dir)
     page = context.new_page()
-    for job in jobs:
+    for i, job in enumerate(jobs):
         if job.sentCv:     # 跳过已发送的岗位
             continue
         page.goto(job.url, wait_until="networkidle")
@@ -241,6 +250,11 @@ def send_cv(user_id, jobs: List[JobInfo], cv_path, message):
         time.sleep(1)
         openWindow.ButtonControl(Name='打开(O)').Click()
         page.wait_for_selector(".item-image")       # 等待发送图片出去再退出
+        set_sent_status(user_id, job.id)
+        percentage = (i+1)/len(jobs) * 100
+        if status:
+            status["percentage"] = percentage
+        logger.info(f"已发送{i+1}/{len(jobs)}个岗位，进度{percentage:.2f}%")
     context.close()
     browser.close()
     playwright.stop()

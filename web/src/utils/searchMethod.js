@@ -35,11 +35,9 @@ export default {
                 params[key] = value;
             }
         }
-        const filtersCopy = { ...this.filters };
-        delete filtersCopy.limitNum;
-        params.filterHash = getFiltersMD5(filtersCopy);
+        params.filterHash = getFiltersMD5(this.filters);
         console.log(params)
-        axios.post('/crawl/joblist/start', params)
+        axios.post('/crawl/start/joblist', params)
             .then(() => {
                 this.progress = 0;
                 this.pollProgress();
@@ -60,7 +58,7 @@ export default {
             clearInterval(this.tableTimer);
             this.tableTimer = null;
         }
-        axios.get('/crawl/joblist/stop')
+        axios.get('/crawl/stop')
             .then(() => {
                 this.status = 'exception';
             });
@@ -68,7 +66,7 @@ export default {
     pollProgress() {
         // 定时向后端获取进度
         this.timer = setInterval(() => {
-            axios.get('/crawl/joblist/progress')
+            axios.get('/crawl/progress')
                 .then(response => {
                     this.progress = response.data.percentage;
                     if (this.progress < 0) {
@@ -96,9 +94,7 @@ export default {
     },
     async fetchJobList() {
         try {
-            const filtersCopy = { ...this.filters };
-            delete filtersCopy.limitNum;
-            const filterHash = getFiltersMD5(filtersCopy);
+            const filterHash = getFiltersMD5(this.filters);
             const params = {
                 userId: this.$store.state.user.userInfo.id,
                 filterHash: filterHash,

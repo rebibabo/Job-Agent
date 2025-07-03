@@ -15,8 +15,11 @@
                 <el-button type="danger" @click="stopJob">停止任务</el-button>
             </el-form-item>
 
-            <el-progress :percentage="progress" :status="status"/>
+            
         </el-form>
+
+        <el-progress :percentage="progress" :status="status"/>
+        <br>
 
         <JobTable
             :jobList="jobList"

@@ -1,11 +1,16 @@
-from crawler.api import get_job_list, get_job_list_with_desc
+from agent.ranker import GPTRanker
+from agent.filter import GPTFilter
+from crawler.api import get_job_list, get_job_list_with_desc, send_cv
 from crawler.query import JobQuery
 from database.connector import db_pool
+from database.jobinfo import JobInfo
 from utils.cache import CachedIterator
-from flask import Flask, request, jsonify
-from constant import ALREADY_RUN_CODE
+from flask import Flask, request, jsonify, Response
+from constant import ALREADY_RUN_CODE, DEFAULT_MODEL
 from loguru import logger
 import time
+import os
+import json
 from crawler.requestHelper import Request
 from multiprocessing import Process, Manager
 from resume_routes import resume_bp
@@ -147,7 +152,7 @@ def run_crawler_with_desc(data, status):
         Request.fetcher.shutdown()
 
 def create_app(status):
-    @app.route('/joblist/start', methods=['POST'])
+    @app.route('/start/joblist', methods=['POST'])
     def start_job():
         data = request.get_json()
         status["percentage"] = 0
@@ -162,35 +167,97 @@ def create_app(status):
         else:
             return jsonify({"message": "Job already running"}), ALREADY_RUN_CODE
 
-    @app.route('/joblist/progress', methods=['GET'])
+    @app.route('/progress', methods=['GET'])
     def get_progress():        
         if 'percentage' in status and status['percentage'] < 0:
             return jsonify({
                 "percentage": -1,
                 "error": status.get('error', 'Unknown error')
             })
-        return jsonify({
-            "percentage": round(status.get('percentage', 0), 1)
-        })
+        json_str = json.dumps({
+            "percentage": round(status.get('percentage', 0), 1),
+            "results": list(status.get('results', []))
+        }, ensure_ascii=False)
 
-    @app.route('/joblist/stop', methods=['GET'])
+        return Response(json_str, content_type="application/json; charset=utf-8")
+
+    @app.route('/stop', methods=['GET'])
     def stop_job():
         status["running"] = 0
         return jsonify({"message": "Job stopped"}), 200
     
-    @app.route('/filter/start', methods=['POST'])
+    @app.route('/start/filter', methods=['POST'])
     def start_filter():
         data = request.get_json()
         user_id = data.get('userId')
+        jobs = data.get('jobs')
+        filter_query = data.get('filterQuery')
+        batch_size = data.get('batchSize', 10)
+        model = data.get('model', DEFAULT_MODEL)
+        temperature = data.get('temperature', 0.5)
+        
+        jobList = []
+        for job in jobs:
+            jobList.append(JobInfo.from_dict(job))
+        filter = GPTFilter(jobList, filter_query, max_retries=3)
+        
         if not user_id:
             return jsonify({'success': False, 'message': 'userId 必填'}), 400
         if status.get('running', 0) == 0:
-            p = Process(target=run_crawler, args=(data, status))
+            status["running"] = 1
+            status["results"] = manager.list()
+            status["percentage"] = 0
+            p = Process(target=filter.filter, args=(batch_size, model, temperature, status))
             p.start()
             return jsonify({"message": "Filter started"}), 200
         else:
             return jsonify({"message": "Filter already running"}), ALREADY_RUN_CODE
+        
+    @app.route('/start/rank', methods=['POST'])
+    def start_rank():
+        data = request.get_json()
+        user_id = data.get('userId')
+        jobs = data.get('jobs')
+        resumeName = data.get('resumeName')
+        cv_path = os.path.join("cache", user_id, "resume", resumeName)
+        batch_size = data.get('batchSize', 10)
+        model = data.get('model', DEFAULT_MODEL)
+        temperature = data.get('temperature', 0.5)
+        
+        jobList = []
+        for job in jobs:
+            jobList.append(JobInfo.from_dict(job))
+        ranker = GPTRanker(jobList, cv_path)
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': 'userId 必填'}), 400
+        if status.get('running', 0) == 0:
+            status["running"] = 1
+            status["results"] = manager.list()
+            status["percentage"] = 0
+            p = Process(target=ranker.rank, args=(batch_size, model, temperature, status))
+            p.start()
+            return jsonify({"message": "Rank started"}), 200
+        else:
+            return jsonify({"message": "Rank already running"}), ALREADY_RUN_CODE
     
+    @app.route('/start/sentcv', methods=['POST'])
+    def start_sentcv():
+        status["percentage"] = 0
+        data = request.get_json()
+        user_id = data.get('userId')
+        jobs = data.get('jobs')
+        resume_name = data.get('resumeName')
+        message = data.get('message')
+        cv_path = os.path.join("cache", user_id, "resume", resume_name)
+        if not user_id or not jobs or not resume_name or not message:
+            return jsonify({'success': False, 'message': '缺少必要参数'}), 400
+        if status.get('running', 0) == 0:
+            p = Process(target=send_cv, args=(user_id, jobs, cv_path, message, status))
+            p.start()
+            return jsonify({"message": "Send CV started"}), 200
+        else:
+            return jsonify({"message": "Send CV already running"}), ALREADY_RUN_CODE
     return app
     
 if __name__ == '__main__':
@@ -200,5 +267,6 @@ if __name__ == '__main__':
     status = manager.dict()
     status["percentage"] = 0.0
     status["running"] = 0
+    status["results"] = manager.list()
     app = create_app(status)
     app.run(debug=False, host='0.0.0.0', port=5000)

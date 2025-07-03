@@ -1,6 +1,7 @@
 package com.jobagent.controller;
 
 import com.jobagent.dto.*;
+import com.jobagent.entity.Job;
 import com.jobagent.service.JobService;
 import com.jobagent.vo.PageResult;
 import com.jobagent.vo.Result;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/job")
@@ -87,16 +87,37 @@ public class JobController {
     }
 
     @PostMapping("/deleteFilter")
-    public Result deleteFilterJob(@RequestBody DeleteFilterJobDTO deleteFilterJobDTO) {
-        log.info("删除指定过滤规则的岗位: {}", deleteFilterJobDTO);
-        jobService.deleteFilterJob(deleteFilterJobDTO);
+    public Result deleteFilterJob(@RequestBody FilterJobDTO filterJobDTO) {
+        log.info("删除指定过滤规则的岗位: {}", filterJobDTO);
+        jobService.deleteFilterJob(filterJobDTO);
         return Result.success();
     }
 
+    @PostMapping("/deleteUserJob")
+    public Result deleteUserJob(@RequestBody DeleteJobDTO deleteJobDTO) {
+        log.info("删除user_job中的内容，但不删除job表: {}", deleteJobDTO);
+        jobService.deleteUserJobByIds(deleteJobDTO);
+        return Result.success();
+    }
+
+    @PostMapping("/filterJob")
+    public Result<List<Job>> getFilterJob(@RequestBody FilterJobDTO filterJobDTO) {
+        log.info("查询指定过滤规则的岗位列表: {}", filterJobDTO);
+        List<Job> result = jobService.getFilterJob(filterJobDTO);
+        return Result.success(result);
+    }
+
     @PostMapping("/view")
-    public Result setViewStatus(@RequestBody JobViewDTO jobViewDTO) {
-        log.info("设置已查看状态: {}", jobViewDTO);
-        jobService.setViewStatus(jobViewDTO);
+    public Result setViewStatus(@RequestBody JobStatusDTO jobStatusDTO) {
+        log.info("设置已查看状态: {}", jobStatusDTO);
+        jobService.setViewStatus(jobStatusDTO);
+        return Result.success();
+    }
+
+    @PostMapping("/sent")
+    public Result setsentCVStatus(@RequestBody JobStatusDTO jobStatusDTO) {
+        log.info("设置已投递状态: {}", jobStatusDTO);
+        jobService.setsentCVStatus(jobStatusDTO);
         return Result.success();
     }
 

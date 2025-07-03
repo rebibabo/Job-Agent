@@ -2,10 +2,8 @@ package com.jobagent.dto;
 
 import lombok.Data;
 
-import java.util.List;
-
 @Data
-public class DeleteFilterJobDTO {
+public class FilterJobDTO {
     String userId;
     String filterHash;
 }

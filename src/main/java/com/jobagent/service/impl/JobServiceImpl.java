@@ -81,8 +81,8 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public void setViewStatus(JobViewDTO jobViewDTO) {
-        jobMapper.setViewStatus(jobViewDTO);
+    public void setViewStatus(JobStatusDTO jobStatusDTO) {
+        jobMapper.setViewStatus(jobStatusDTO);
     }
 
     @Override
@@ -135,7 +135,22 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public void deleteFilterJob(DeleteFilterJobDTO deleteFilterJobDTO) {
-        jobMapper.deleteFilterJob(deleteFilterJobDTO);
+    public void deleteFilterJob(FilterJobDTO filterJobDTO) {
+        jobMapper.deleteFilterJob(filterJobDTO);
+    }
+
+    @Override
+    public void setsentCVStatus(JobStatusDTO jobStatusDTO) {
+        jobMapper.setsentCVStatus(jobStatusDTO);
+    }
+
+    @Override
+    public List<Job> getFilterJob(FilterJobDTO filterJobDTO) {
+        return jobMapper.selectFilterJob(filterJobDTO);
+    }
+
+    @Override
+    public void deleteUserJobByIds(DeleteJobDTO deleteJobDTO) {
+        jobMapper.deleteUserJobByIds(deleteJobDTO);
     }
 }

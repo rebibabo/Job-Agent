@@ -8,30 +8,30 @@ import requests
 
 @builder
 class JobInfo:
-    securityId: str   
-    jobName: str
-    jobType: str
-    companyId: str
-    companyName: str
-    url: str
-    salary: str
-    salaryFloor: int
-    salaryCeiling: int
-    crawlDate: datetime
-    city: str
-    region: str
-    experience: str
-    degree: str
-    industry: str
-    title: str
-    skills: str
-    description: str
-    scale: str
-    stage: str
-    welfare: str
-    id: str
-    viewed: bool
-    sentCv: bool
+    securityId: str = ""
+    jobName: str = ""
+    jobType: str = ""
+    companyId: str = ""
+    companyName: str = ""
+    url: str = ""
+    salary: str = ""
+    salaryFloor: int = 0
+    salaryCeiling: int = 0
+    crawlDate: datetime = datetime.now()
+    city: str = ""
+    region: str = ""
+    experience: str = ""
+    degree: str = ""
+    industry: str = ""
+    title: str = ""
+    skills: str = ""
+    description: str = ""
+    scale: str = ""
+    stage: str = ""
+    welfare: str = ""
+    id: str = ""
+    viewed: bool = False
+    sentCv: bool = False
     
     def __post_init__(self):
         self.region = self.region.strip()
@@ -51,7 +51,6 @@ class JobInfo:
         for k, v in js.items():
             if k in allowed_keys:
                 setattr(obj, k, v)
-        obj.__post_init__()  # 调用清理方法
         return obj
     
     def __str__(self):

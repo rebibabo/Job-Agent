@@ -20,5 +20,6 @@ LOGIN_URL = "http://localhost:8081/user/login"
 QUERY_URL = "http://localhost:8081/job/page"
 LIST_URL = "http://localhost:8081/job/list"
 DESC_URL = "http://localhost:8081/job/desc"
+SETSTATUS_URL = "http://localhost:8081/job/sent"
 
 DEFAULT_MODEL = "gpt-4o-mini"

@@ -44,3 +44,11 @@ export const deleteALLAPI = (params) => {
 export const setViewStatusAPI = (params) => {
     return request.post('/api/job/view', params)
 }
+
+export const getFilterJobAPI = (params) => {
+    return request.post('/api/job/filterJob', params)
+}
+
+export const startFilterAPI = (params) => {
+    return request.post('/crawl/start/filter', params)
+}

@@ -42,7 +42,7 @@ public interface JobMapper {
     void deleteJobByIds(@Param("deleteJobDTO") DeleteJobDTO deleteJobDTO);
 
     @Update("UPDATE user_job SET viewed = 1 WHERE user_id = #{jobViewDTO.user_id} AND job_id = #{jobViewDTO.job_id}")
-    void setViewStatus(@Param("jobViewDTO") JobViewDTO jobViewDTO);
+    void setViewStatus(@Param("jobViewDTO") JobStatusDTO jobStatusDTO);
 
     // 单条插入公司，返回是否成功（或直接无返回）
     int insertCompanyIfNotExists(JobInfo job);
@@ -62,6 +62,13 @@ public interface JobMapper {
 
     int findJobWithoutDesc(@Param("whetherAddDescDTO") WhetherAddDescDTO whetherAddDescDTO);
 
-    @Delete("DELETE FROM user_job WHERE user_id=#{deleteFilterJobDTO.userId} AND filter_hash=#{deleteFilterJobDTO.filterHash} AND sent_cv != TRUE")
-    void deleteFilterJob(@Param("deleteFilterJobDTO") DeleteFilterJobDTO deleteFilterJobDTO);
+    @Select("SELECT j.*, c.*, c.name as companyName, u.* FROM job j, company c, user_job u WHERE user_id=#{filterJobDTO.userId} AND filter_hash=#{filterJobDTO.filterHash} AND sent_cv != TRUE AND u.job_id = j.id AND c.id = j.companyId")
+    List<Job> selectFilterJob(@Param("filterJobDTO") FilterJobDTO filterJobDTO);
+
+
+    @Delete("DELETE FROM user_job WHERE user_id=#{filterJobDTO.userId} AND filter_hash=#{filterJobDTO.filterHash} AND sent_cv != TRUE")
+    void deleteFilterJob(@Param("filterJobDTO") FilterJobDTO filterJobDTO);
+
+    @Update("UPDATE user_job SET sent_cv = 1 WHERE user_id = #{jobViewDTO.user_id} AND job_id = #{jobViewDTO.job_id}")
+    void setsentCVStatus(@Param("jobViewDTO") JobStatusDTO jobStatusDTO);
 }

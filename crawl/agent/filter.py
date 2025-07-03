@@ -33,7 +33,7 @@ class GPTFilter:
 
         messages.append({"role": "user", "content": f"以上一共{num}条岗位信息，过滤要求如下：\n{self.query}"})
         messages.append({"role": "assistant", "content": "好的，我将根据你的要求进行岗位筛选。"})
-        messages.append({"role": "user", "content": f"请对上面{num}个条招聘岗位进行筛选，返回符合条件的岗位列表，输出的格式应该是数字列表, eg., [0, 3, 5]。只要回答岗位列表，不要解释任何理由。"})
+        messages.append({"role": "user", "content": f"请对上面{num}个条招聘岗位进行筛选，返回不符合条件的岗位列表，输出的格式应该是数字列表, eg., [0, 3, 5]。只要回答岗位列表，不要解释任何理由。"})
 
         for _ in range(self.max_retries):
             response = get_response(LLM, messages, model, temperature)
@@ -53,15 +53,27 @@ class GPTFilter:
     ) -> List[JobInfo]:
         ans = []
         LLM = get_llm(api_key=api_key, base_url=base_url)
-        for i in trange(0, len(self.jobinfo), batch_size):
+        total = len(self.jobinfo) / batch_size
+        for i, startIdx in enumerate(trange(0, len(self.jobinfo), batch_size)):
             selected_job = None
             for _ in range(self.max_retries):
-                batch_job = self.jobinfo[i:i+batch_size]
+                if status and status["running"] == 0:
+                    logger.info("停止过滤")
+                    return ans
+                batch_job = self.jobinfo[startIdx:startIdx+batch_size]
                 selected_job = self.batch_filter(LLM, batch_job, model=model, temperature=temperature)
                 if selected_job:
                     ans.extend(selected_job)
+                    if status:
+                        status["percentage"] = i / total * 100
+                        status["results"].extend([job.to_dict() for job in selected_job])
                     break
             if selected_job is None:
                 logger.warning("Max retries reached, skipping...")
                 continue
+        if status:
+            status["percentage"] = 100
+            status["running"] = 0
+        jobIds = [job.to_dict() for job in ans]
+        logger.info(f"被过滤的岗位数量：{len(jobIds)}")
         return ans

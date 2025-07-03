@@ -26,6 +26,8 @@ function sortObject(obj) {
 }
 
 export function getFiltersMD5(filters) {
-    const sortedStr = JSON.stringify(sortObject(filters))
+    const filtersCopy = { ...filters };
+    delete filtersCopy.limitNum;
+    const sortedStr = JSON.stringify(sortObject(filtersCopy))
     return CryptoJS.MD5(sortedStr).toString().toLowerCase()
 }

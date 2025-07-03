@@ -1,9 +1,8 @@
 package com.jobagent.service;
 
 import com.jobagent.dto.*;
+import com.jobagent.entity.Job;
 import com.jobagent.vo.PageResult;
-import com.jobagent.vo.Result;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,7 +27,7 @@ public interface JobService {
 
     void deleteByIds(DeleteJobDTO deleteJobDTO);
 
-    void setViewStatus(JobViewDTO jobViewDTO);
+    void setViewStatus(JobStatusDTO jobStatusDTO);
 
     String insertJobs(InsertJobsDTO insertJobsDTO);
 
@@ -36,5 +35,11 @@ public interface JobService {
 
     Boolean whetherAddDesc(WhetherAddDescDTO whetherAddDescDTO);
 
-    void deleteFilterJob(DeleteFilterJobDTO deleteJobDTO);
+    void deleteFilterJob(FilterJobDTO deleteJobDTO);
+
+    void setsentCVStatus(JobStatusDTO jobStatusDTO);
+
+    List<Job> getFilterJob(FilterJobDTO filterJobDTO);
+
+    void deleteUserJobByIds(DeleteJobDTO deleteJobDTO);
 }

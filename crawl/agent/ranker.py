@@ -49,6 +49,7 @@ class GPTRanker:
         batch_size: int=16, 
         model: str = DEFAULT_MODEL, 
         temperature: float = 0.5,
+        status=None,
         repeat: int = 5,
         api_key: str = None,
         base_url: str = None,
@@ -64,6 +65,7 @@ class GPTRanker:
                 if scores and len(scores) == len(batch_job):
                     j += 1
                     repeat_scores.append(scores)
+            
             if scores is None:
                 print("Max retries reached, skipping...")
                 total_scores.extend([0]*batch_size)
@@ -71,8 +73,11 @@ class GPTRanker:
                 
             repeat_scores = np.array(repeat_scores)
             median_scores = np.median(repeat_scores, axis=0)
-            print(median_scores)
             total_scores.extend(median_scores)
+            
+            if status:
+                percentage = (len(total_scores) / len(self.jobinfo)) * 100
+                status["percentage"] = percentage
             
         res = []
         for i, score in enumerate(total_scores):
