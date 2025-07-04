@@ -9,7 +9,7 @@
                 <el-button type="primary" @click="fetchJobList">历史记录</el-button>
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" @click="() => startJob(false)">开始任务</el-button>
+                <el-button type="primary" @click="() => startJob(false)" :loading="loading">开始任务</el-button>
             </el-form-item>
             <el-form-item>
                 <el-button type="danger" @click="stopJob">停止任务</el-button>
@@ -30,7 +30,7 @@
             :maxHeight="700"
             @update:currentPage="currentPage = $event"
             @update:pageSize="pageSize = $event"
-            @pagination-change="fetchJobList"
+            @pagination-change="fetchJobListAndRestore"
             ref="jobTableRef"
         />
     </div>
@@ -45,6 +45,12 @@ import searchMethods from '@/utils/searchMethod.js';
 export default {
     name: 'JobSearch',
     components: { SearchFilter, JobTable },
+    props: {
+        selectedJobIds: {
+            type: Array,
+            default: () => []
+        },
+    },
     data() {
         return {
             progress: 0,
@@ -55,12 +61,13 @@ export default {
             filters: {},
             currentPage: 1,
             pageSize: 40,
+            loading: false,
             totalNumber: 0
         };
     },
     methods: {
         ...searchMethods,
-
+        
     },
     beforeDestroy() {
         if (this.timer) {

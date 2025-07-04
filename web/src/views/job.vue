@@ -15,7 +15,7 @@
             :deleteAll="false"
             @update:currentPage="currentPage = $event"
             @update:pageSize="pageSize = $event"
-            @pagination-change="fetchJobList"
+            @pagination-change="fetchJobListAndRestore"
             ref="jobTableRef"
         />
 
@@ -73,13 +73,19 @@ export default {
         },
         onSubmit() {
             this.currentPage = 1
-            this.fetchJobList()
+            this.fetchJobListAndRestore()
             this.$refs.jobTableRef.scrollUp()
         },
         onReset() {
             this.currentPage = 1
-            this.fetchJobList()
+            this.fetchJobListAndRestore()
             this.$refs.jobTableRef.scrollUp()
+        },
+        async fetchJobListAndRestore() {
+            await this.fetchJobList();
+            this.$nextTick(() => {
+                this.$refs.jobTableRef.restoreSelection();
+            });
         }
     },
     mounted() {

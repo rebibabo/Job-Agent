@@ -4,14 +4,15 @@ from database.jobinfo import JobInfo
 from utils.llm import get_response, get_llm
 from tqdm import trange
 from constant import DEFAULT_MODEL
-import re
+from loguru import logger
 import numpy as np
 
 class GPTRanker:
-    def __init__(self, jobinfo: List[JobInfo], cv_path: str):
+    def __init__(self, jobinfo: List[JobInfo], cv_path: str, max_retries: int=3):
         self.jobinfo = jobinfo
         self.jobs = [(i, job.description) for i, job in enumerate(jobinfo)]
         self.cv = ResumeLoader(cv_path).content
+        self.max_retries = max_retries
         
     def batch_ranker(
         self,
@@ -36,14 +37,22 @@ class GPTRanker:
         messages.append({"role": "user", "content": f"用户个人简历如下\n{self.cv}"})
         messages.append({"role": "assistant", "content": "收到简历"})
         messages.append({"role": "user", "content": f"请根据用户个人简历对上面{num}个招聘岗位进行匹配度打分，输出的格式是整数列表，长度和岗位数量相同，第i个元素表示第i个岗位的匹配度打分，满分10分。 eg., [number1, number2, ..., numberx]。只要回答排名结果，不要解释任何理由。"})
-            
-        response = get_response(LLM, messages, model, temperature)
         
-        try:
-            return eval(response)
-        except:
-            print("error in parsing response: ", response)
-            return None
+        for _ in range(self.max_retries):
+            response = get_response(LLM, messages, model, temperature)
+            try:
+                return eval(response)
+            except:
+                print("error in parsing response: ", response)
+                return None
+        
+    def get_result(self, total_scores: List[int]):
+        res = []
+        for i, score in enumerate(total_scores):
+            self.jobinfo[i].score = score
+            res.append(self.jobinfo[i])
+        res = sorted(res, key=lambda x: x.score, reverse=True)
+        return [job.to_dict() for job in res]
     
     def rank(self, 
         batch_size: int=16, 
@@ -56,36 +65,31 @@ class GPTRanker:
     ) -> List[JobInfo]:
         total_scores = []
         LLM = get_llm(api_key=api_key, base_url=base_url)
-        for i in trange(0, len(self.jobinfo), batch_size):
+        for startIdx in trange(0, len(self.jobinfo), batch_size):
             repeat_scores = []
             j = 0
             while j < repeat:
-                batch_job = self.jobs[i:i+batch_size]
+                if status and status["running"] == 0:
+                    logger.info("停止排序")
+                    return self.get_result(total_scores)
+                batch_job = self.jobs[startIdx:startIdx+batch_size]
                 scores = self.batch_ranker(LLM, batch_job, model=model, temperature=temperature)
                 if scores and len(scores) == len(batch_job):
                     j += 1
                     repeat_scores.append(scores)
-            
-            if scores is None:
-                print("Max retries reached, skipping...")
-                total_scores.extend([0]*batch_size)
-                continue
                 
             repeat_scores = np.array(repeat_scores)
             median_scores = np.median(repeat_scores, axis=0)
             total_scores.extend(median_scores)
             
             if status:
-                percentage = (len(total_scores) / len(self.jobinfo)) * 100
-                status["percentage"] = percentage
-            
-        res = []
-        for i, score in enumerate(total_scores):
-            self.jobinfo[i].score = score
-            res.append(self.jobinfo[i])
-            
-        res = sorted(res, key=lambda x: x.score, reverse=True)
-        return res
+                status["percentage"] = (startIdx+batch_size / len(self.jobs)) * 100
+                status["results"] = self.get_result(total_scores)
+        if status:
+            status["percentage"] = 100
+            status["running"] = 0
+        logger.info(f"排序完成，共计{len(total_scores)}个岗位")
+        return self.get_result(total_scores)
     
     def test_stability(self,
         batch_size: int=16, 

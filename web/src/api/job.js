@@ -41,6 +41,10 @@ export const deleteALLAPI = (params) => {
     return request.post('/api/job/deleteFilter', params)
 }
 
+export const deleteALLFilteredAPI = (params) => {
+    return request.post('/api/job/deleteUserJob', params)
+}
+
 export const setViewStatusAPI = (params) => {
     return request.post('/api/job/view', params)
 }
@@ -51,4 +55,8 @@ export const getFilterJobAPI = (params) => {
 
 export const startFilterAPI = (params) => {
     return request.post('/crawl/start/filter', params)
+}
+
+export const startRankAPI = (params) => {
+    return request.post('/crawl/start/rank', params)
 }

@@ -73,6 +73,7 @@
     <delete id="deleteUserJobByIds" parameterType="com.jobagent.dto.DeleteJobDTO">
         DELETE FROM user_job
         WHERE user_id = #{deleteJobDTO.user_id}
+        AND filter_hash = #{deleteJobDTO.filter_hash}
         AND job_id IN
         <foreach collection="deleteJobDTO.job_ids" item="id" open="(" separator="," close=")">
             #{id}

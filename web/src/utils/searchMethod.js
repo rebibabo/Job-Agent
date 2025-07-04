@@ -13,6 +13,7 @@ export default {
     },
     startJob(getDesc = false) {
         // 清理可能残留的定时器
+        this.loading = true;
         if (this.timer) {
             clearInterval(this.timer);
             this.timer = null;
@@ -22,6 +23,7 @@ export default {
             this.tableTimer = null;
         }
         this.fetchJobList();
+        
 
         // 假设启动任务接口
         this.status = null;
@@ -50,6 +52,7 @@ export default {
             });
     },
     stopJob() {
+        this.loading = false;
         if (this.timer) {
             clearInterval(this.timer);
             this.timer = null;
@@ -75,13 +78,15 @@ export default {
                         clearInterval(this.tableTimer);
                     }
                     else if (this.progress >= 100) {
+                        this.loading = false;
                         this.status = 'success';
                         clearInterval(this.timer);
                         clearInterval(this.tableTimer);
                         this.fetchJobList();
                     }
                 })
-                .catch(() => {
+                .catch((err) => {
+                    this.$message.error(err.message || '获取进度失败');
                     this.status = 'exception';
                     clearInterval(this.timer);
                 });
@@ -108,4 +113,10 @@ export default {
             this.$message.error(error.message || '请求职位列表失败')
         }
     },
+    async fetchJobListAndRestore() {
+        await this.fetchJobList();
+        this.$nextTick(() => {
+            this.$refs.jobTableRef.restoreSelection();
+        });
+    }
 }

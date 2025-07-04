@@ -199,7 +199,7 @@ def create_app(status):
         jobList = []
         for job in jobs:
             jobList.append(JobInfo.from_dict(job))
-        filter = GPTFilter(jobList, filter_query, max_retries=3)
+        filter = GPTFilter(jobList, filter_query)
         
         if not user_id:
             return jsonify({'success': False, 'message': 'userId 必填'}), 400
@@ -212,14 +212,15 @@ def create_app(status):
             return jsonify({"message": "Filter started"}), 200
         else:
             return jsonify({"message": "Filter already running"}), ALREADY_RUN_CODE
+
         
     @app.route('/start/rank', methods=['POST'])
     def start_rank():
         data = request.get_json()
-        user_id = data.get('userId')
+        user_id = str(data.get('userId'))
         jobs = data.get('jobs')
         resumeName = data.get('resumeName')
-        cv_path = os.path.join("cache", user_id, "resume", resumeName)
+        cv_path = os.path.join("cache", user_id, "resume", resumeName, resumeName + ".pdf")
         batch_size = data.get('batchSize', 10)
         model = data.get('model', DEFAULT_MODEL)
         temperature = data.get('temperature', 0.5)

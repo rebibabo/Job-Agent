@@ -2,6 +2,9 @@ const { defineConfig } = require("@vue/cli-service");
 module.exports = defineConfig({
   transpileDependencies: true,
   devServer: {
+    client: {
+      webSocketURL: "ws://localhost:8080/ws",
+    },
     proxy: {
       "/api": {
         // 匹配所有以 /api 开头的请求
