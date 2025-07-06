@@ -10,7 +10,7 @@
             <el-table-column prop="region" sortable label="城市区域" width="150" />
             <el-table-column prop="experience" sortable label="经验要求" width="150" />
             <el-table-column prop="degree" sortable label="学历要求" width="140" />
-            <el-table-column prop="industry" sortable label="公司行业" width="160" />
+            <el-table-column prop="industry" sortable label="公司行业" width="150" />
             <el-table-column prop="title" sortable label="工作岗位" width="120" />
             <el-table-column prop="scale" sortable label="公司规模" width="150" />
             <el-table-column prop="stage" sortable label="融资阶段" width="150" />
@@ -82,6 +82,7 @@ export default {
     },
     methods: {
         toggleRowSelection(row, selected) {
+            console.log("选择行", row, selected)
             this.$refs.jobTable.toggleRowSelection(row, selected);
         },
         handleSelectionChange(selection) {

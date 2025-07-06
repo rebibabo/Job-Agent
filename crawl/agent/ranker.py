@@ -83,7 +83,7 @@ class GPTRanker:
             total_scores.extend(median_scores)
             
             if status:
-                status["percentage"] = (startIdx+batch_size / len(self.jobs)) * 100
+                status["percentage"] = ((startIdx+batch_size) / len(self.jobs)) * 100
                 status["results"] = self.get_result(total_scores)
         if status:
             status["percentage"] = 100

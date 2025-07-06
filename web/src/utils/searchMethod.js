@@ -106,6 +106,7 @@ export default {
                 page: this.currentPage,
                 pageSize: this.pageSize
             }
+            console.log(params)
             const response = await jobListFilterAPI(params)
             this.jobList = response.data.items
             this.totalNumber = response.data.total

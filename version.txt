@@ -145,3 +145,10 @@
 
 后端：
 1. 完善过滤和排序接口，先根据filterHash、userId和jobIds获取岗位列表，再将其传到后端进行过滤排序
+
+
+7-5
+前端:
+1. 解决crawl,filter,score界面不同的loading,status,progress共用冲突的问题
+2. score界面添加根据MinScore阈值勾选不同岗位的功能
+3. 新增简历投递的前端界面

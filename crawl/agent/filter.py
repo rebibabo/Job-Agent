@@ -75,7 +75,7 @@ class GPTFilter:
             selected_job = [self.jobinfo[idx] for idx, freq in filter_freq.items() if freq >= threshold]
             ans.extend(selected_job)
             if status:
-                status["percentage"] = (startIdx + len(selected_job)) / len(self.jobs) * 100
+                status["percentage"] = (startIdx + batch_size) / len(self.jobs) * 100
                 status["results"].extend([job.to_dict() for job in selected_job])
         if status:
             status["percentage"] = 100
