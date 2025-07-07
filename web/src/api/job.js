@@ -60,3 +60,7 @@ export const startFilterAPI = (params) => {
 export const startRankAPI = (params) => {
     return request.post('/crawl/start/rank', params)
 }
+
+export const sendResumeAPI = (params) => {
+    return request.post('/crawl/start/sendcv', params)
+}

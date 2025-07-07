@@ -27,16 +27,16 @@
         </el-table>
 
         <div style="display: flex; align-items: center; margin: 20px 0;">
-            <el-button type="primary" @click="sendResume" :disabled="!selectedJobs.length" size="medium" v-if="!sentCVFrame">
+            <el-button type="primary" @click="sendResume" :disabled="!selectedJobs.length" size="medium" v-if="!sentCVFrame&&!noButton">
                 投递简历
             </el-button>
-            <el-button type="danger" @click="confirmDeleteSelected" :disabled="!selectedJobs.length" size="medium" v-if="!sentCVFrame">
+            <el-button type="danger" @click="confirmDeleteSelected" :disabled="!selectedJobs.length" size="medium" v-if="!sentCVFrame&&!noButton">
                 删除所选
             </el-button>
-            <el-button type="danger" @click="confirmaDeleteFilteredJob" size="medium" v-if="sentCVFrame">
+            <el-button type="danger" @click="confirmaDeleteFilteredJob" size="medium" v-if="sentCVFrame&&!noButton">
                 删除所有待过滤岗位
             </el-button>
-            <el-button type="danger" @click="confirmDeleteAll" size="medium" v-if="deleteAll">
+            <el-button type="danger" @click="confirmDeleteAll" size="medium" v-if="deleteAll&&!noButton">
                 删除全部
             </el-button>
         </div>
@@ -71,7 +71,8 @@ export default {
         maxHeight: { type: [Number, String], default: 850 },
         deleteAll: { type: Boolean, default: true },
         sentCVFrame: { type: Boolean, default: false },
-        rankScore: { type: Boolean, default: false }
+        rankScore: { type: Boolean, default: false },
+        noButton: { type: Boolean, default: false }
     },
     emits: ['view', 'delete', 'send', 'update:currentPage', 'update:pageSize', 'pagination-change'],
     data() {
@@ -183,7 +184,7 @@ export default {
                 this.$message.warning('请先选择要投递简历的岗位')
                 return
             }
-            console.log('投递简历:', ids)
+            this.$emit('send', ids)
         },
         onSizeChange(size) {
             this.$emit('update:pageSize', size)

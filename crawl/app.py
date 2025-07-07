@@ -242,19 +242,23 @@ def create_app(status):
         else:
             return jsonify({"message": "Rank already running"}), ALREADY_RUN_CODE
     
-    @app.route('/start/sentcv', methods=['POST'])
+    @app.route('/start/sendcv', methods=['POST'])
     def start_sentcv():
         status["percentage"] = 0
         data = request.get_json()
-        user_id = data.get('userId')
+        user_id = str(data.get('userId'))
         jobs = data.get('jobs')
+        jobs = [JobInfo.from_dict(job) for job in jobs]
         resume_name = data.get('resumeName')
         message = data.get('message')
-        cv_path = os.path.join("cache", user_id, "resume", resume_name)
+        model = data.get('model', DEFAULT_MODEL)
+        temperature = data.get('temperature', 0.5)
+        polish = data.get('polish', True)
+        cv_path = os.path.join("cache", user_id, "resume", resume_name, resume_name + ".pdf")
         if not user_id or not jobs or not resume_name or not message:
             return jsonify({'success': False, 'message': '缺少必要参数'}), 400
         if status.get('running', 0) == 0:
-            p = Process(target=send_cv, args=(user_id, jobs, cv_path, message, status))
+            p = Process(target=send_cv, args=(user_id, jobs, cv_path, message, polish, model, temperature, status))
             p.start()
             return jsonify({"message": "Send CV started"}), 200
         else:

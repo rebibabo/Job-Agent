@@ -69,7 +69,7 @@ class ResumeLoader:
     def picture_path(self):
         # 如果没有图片，则将pdf转换为一张图片，返回图片路径
         final_image_path = os.path.join(self.cache_dir, 'cv.png')
-        
+            
         if not os.path.exists(final_image_path):
             pdfDoc = fitz.open(self.file_path)
             images = []

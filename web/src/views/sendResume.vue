@@ -253,27 +253,64 @@
             
             <!-- 简历投递 -->
             <el-tab-pane label="简历投递" name="deliver">
-                <el-form inline label-width="80px">
+                <el-form inline label-width="80px" :model="sendForm">
                     <el-form-item>
                         <template #label>
                             问候语
-                            <el-tooltip class="item" effect="dark" content="发送给Boss的问候语，如：“hr您好，我是xxx，于xx年毕业于xxx学校...”，系统将根据各个岗位描述对问候语进行优化，提升Boss回复率。" placement="top">
+                            <el-tooltip class="item" effect="dark" content="发送给Boss的问候语，如：“hr您好，我是xxx，于xx年毕业于xxx学校...”" placement="top">
                                 <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
                             </el-tooltip>
                         </template>
-                        <el-input v-model="message" placeholder="请输入问候语" style="width: 400px;" />
+                        <el-input v-model="sendForm.message" placeholder="请输入问候语" style="width: 400px;" />
                     </el-form-item>
 
+                    <el-form-item>
+                        <template #label>
+                            润色
+                            <el-tooltip class="item" effect="dark" content="系统将根据各个岗位描述对问候语进行优化，提升Boss回复率。" placement="top">
+                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                            </el-tooltip>
+                        </template>
+                        <el-switch v-model="sendForm.polish"/>
+                        
+                    </el-form-item>
+
+                    <el-form-item label="选择模型" label-width="120px">
+                        <el-select v-model="sendForm.model" placeholder="请选择模型" style="width: 300px;">
+                            <el-option v-for="item in models" :key="item" :label="item" :value="item">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+
+                    <el-form-item label-width="120px">
+                        <template #label>
+                            温度
+                            <el-tooltip class="item" effect="dark" content="温度用于控制生成的随机性，值越大回答越发散，越小则更确定。" placement="top">
+                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                            </el-tooltip>
+                        </template>
+                        <el-slider v-model="sendForm.temperature" style="width: 300px;" :step="5"
+                            :format-tooltip="formatTemperature" />
+                    </el-form-item>
                 </el-form>
 
-                <el-progress :percentage="progress" :status="status" />
+                <el-form inline>
+                    <el-form-item>
+                        <el-button type="primary" @click="startSendResume" :loading="sendLoading">开始投递</el-button>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="danger" @click="() => stopJob(4)">停止投递</el-button>
+                    </el-form-item>
+                </el-form>
+
+                <el-progress :percentage="sendProgress" :status="sendStatus" />
                 <br>
 
                 <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
-                :totalNumber="totalNumber" :maxHeight="780" @update:currentPage="currentPage = $event"
-                @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableRef"
-                :deleteAll="false" :selectedJobIds="selectedFilteredJobIds"
-                @selection-change="handleJobSelectionChange" />
+                :totalNumber="totalNumber" :maxHeight="700" @update:currentPage="currentPage = $event"
+                @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableSend"
+                :deleteAll="false" :selectedJobIds="selectedFilteredJobIds" :noButton="true"
+                @selection-change="handleJobSelectionChange" @send="startSendResume"/>
 
             </el-tab-pane>
         </el-tabs>
@@ -291,7 +328,7 @@ import SearchFilter from "@/components/SearchFilter.vue";
 import JobTable from "@/components/JobTable.vue";
 import searchMethods from '@/utils/searchMethod.js';
 import { getFiltersMD5 } from '@/utils/encrypt';
-import { getFilterJobAPI, startFilterAPI, startRankAPI } from '@/api/job';
+import { getFilterJobAPI, startFilterAPI, startRankAPI, sendResumeAPI } from '@/api/job';
 import axios from 'axios';
 
 export default {
@@ -313,6 +350,9 @@ export default {
             crawlProgress: 0,
             crawlLoading: false,
             crawlStatus: null,
+            sendProgress: 0,
+            sendLoading: false,
+            sendStatus: null,
             timer: null,
             tableTimer: null,
             previewDialog: false,
@@ -321,7 +361,6 @@ export default {
             selectedResume: null,
             startParsing: false,
             finish: false,
-            message: "",
             currentPage: 1,
             pageSize: 20,
             totalNumber: 0,
@@ -337,6 +376,12 @@ export default {
             rankForm: {
                 minScore: 70,
                 batchSize: 50,
+                model: 'gpt-4o-mini',
+                temperature: 25
+            },
+            sendForm: {
+                message: "",
+                polish: true,
                 model: 'gpt-4o-mini',
                 temperature: 25
             },
@@ -673,6 +718,9 @@ export default {
             if (index === 3) { // rank
                 this.rankProgress = progress
             }
+            if (index === 4) { // send
+                this.sendProgress = progress
+            }
         },
         updateStatus(status, index) {
             if (index === 1) { // crawl
@@ -684,6 +732,9 @@ export default {
             if (index === 3) { // rank
                 this.rankStatus = status
             }
+            if (index === 4) { // send
+                this.sendStatus = status
+            }
         },
         updateLoading(loading, index) {
             if (index === 1) { // crawl
@@ -694,6 +745,9 @@ export default {
             }
             if (index === 3) { // rank
                 this.rankLoading = loading
+            }
+            if (index === 4) { // send
+                this.sendLoading = loading
             }
         },
         pollProgress(index) {
@@ -744,6 +798,11 @@ export default {
                                 this.selectLowScore();
                             });
                         }
+
+                        // 投递简历tab
+                        if (this.getCurrentIndex() === 4) {
+                            this.fetchJobList();
+                        }
                     })
                     .catch((err) => {
                         this.updateLoading(false, index);
@@ -790,6 +849,50 @@ export default {
 
                 })
             });
+        },
+        startSendResume() {
+            if (this.timer) {
+                clearInterval(this.timer);
+                this.timer = null;
+            }
+            if (this.sendForm.message === "") {
+                this.$message.warning("请先输入问候语");
+                return;
+            }
+            if (this.selectedResume === null) {
+                this.$message.warning("请先选择简历");
+                return;
+            }
+            if (this.$refs.jobTableSend.selectedJobs.length === 0) {
+                this.$message.warning("请先选择职位");
+                return;
+            }
+            this.sendStatus = null;
+            this.sendProgress = 0;
+            this.sendLoading = true;
+            const params = {
+                "userId": this.$store.state.user.userInfo.id,
+                "jobs": this.$refs.jobTableSend.selectedJobs,
+                "message": this.sendForm.message,
+                "resumeName": this.selectedResume.name,
+                "polish": this.sendForm.polish,
+                "model": this.sendForm.model,
+                "temperature": this.formatTemperature(this.sendForm.temperature),
+            }
+            console.log(params)
+            this.pollProgress(this.getCurrentIndex());
+            sendResumeAPI(params)
+                .then(res => {
+                    console.log("开始发送简历", res);
+                })
+                .catch(err => {
+                    if (err.status === 410) {
+                        this.$message.warning('任务已启动，请勿重复启动');
+                    }
+                    else {
+                        console.error("发送简历出错", err);
+                    }
+                });
         }
     },
 

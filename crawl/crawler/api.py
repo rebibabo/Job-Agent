@@ -1,3 +1,4 @@
+from re import DEBUG
 from crawler.requestHelper import Request
 from crawler.query import JobQuery
 from agent.resume import ResumeLoader
@@ -10,8 +11,9 @@ from loguru import logger
 from constant import LIST_URL, TOKEN_EXPIRED_CODE, SETSTATUS_URL
 from utils.configLoader import inject_config
 from crawler.requestHelper import list_all_cookies
-from utils.tools import get_headers
+from utils.tools import generate_random_id, get_headers
 from agent.filter import GPTFilter
+from agent.polisher import polish_message
 import datetime
 import requests
 import random
@@ -56,6 +58,8 @@ def convert_json_to_job(title: str, js: dict) -> JobInfo:
         .companyName_(js["brandName"]).stage_(js["brandStageName"]).scale_(js["brandScaleName"]).welfare_(','.join(js["welfareList"]))\
         .url_(f'https://www.zhipin.com/job_detail/{js["encryptJobId"]}.html')
     
+    if jobinfo.companyId == "":
+        jobinfo.companyId = generate_random_id(28)
     salary = jobinfo.salary
     try:
         if '面议' in salary:      # 计算不准确薪资，跳过
@@ -217,12 +221,12 @@ def set_sent_status(user_id, job_id):
     headers = get_headers(user_id, reload=True)
     requests.post(SETSTATUS_URL, json=params, headers=headers)
     
-def send_cv(user_id, jobs: List[JobInfo], cv_path, message, status=None):
+def send_cv(user_id, jobs: List[JobInfo], cv_path, message, polish, model, temperature, status=None):
     cache_dir = f"cache/{user_id}"
     playwright = sync_playwright().start()
     browser = playwright.chromium.launch(headless=False)
-    loader = ResumeLoader(cv_path)
-    png_path = loader.picture_path
+    resume = ResumeLoader(cv_path)
+    png_path = resume.picture_path
     context = login(browser, cache_dir)
     page = context.new_page()
     for i, job in enumerate(jobs):
@@ -238,23 +242,29 @@ def send_cv(user_id, jobs: List[JobInfo], cv_path, message, status=None):
             page.locator(".btn-container .btn-startchat").click()   # 再次点击立即沟通
         page.wait_for_selector("#chat-input")
         input_box = page.locator("#chat-input")
-        input_box.fill(message)
-        page.wait_for_timeout(2000)
-        page.locator("button[type=send]").click()
-        page.wait_for_timeout(2000)
-        page.locator(".toolbar-btn-content [type=file]").click()            # 点击发送简历照片
-        page.wait_for_timeout(1000)
-        openWindow = WindowControl(name='打开')
-        openWindow.SwitchToThisWindow()
-        openWindow.EditControl(Name='文件名(N):').SendKeys(png_path)
-        time.sleep(1)
-        openWindow.ButtonControl(Name='打开(O)').Click()
-        page.wait_for_selector(".item-image")       # 等待发送图片出去再退出
+        if polish:
+            message = polish_message(message, resume.summary, job, model=model, temperature=temperature)
+        logger.info(f"正在发送简历到{job.companyName}的{job.title}岗位，消息：{message}")
+        # input_box.fill(message)
+        # page.wait_for_timeout(2000)
+        # page.locator("button[type=send]").click()
+        # page.wait_for_timeout(2000)
+        # page.locator(".toolbar-btn-content [type=file]").click()            # 点击发送简历照片
+        # page.wait_for_timeout(1000)
+        # openWindow = WindowControl(name='打开')
+        # openWindow.SwitchToThisWindow()
+        # openWindow.EditControl(Name='文件名(N):').SendKeys(png_path)
+        # time.sleep(1)
+        # openWindow.ButtonControl(Name='打开(O)').Click()
+        # page.wait_for_selector(".item-image")       # 等待发送图片出去再退出
         set_sent_status(user_id, job.id)
         percentage = (i+1)/len(jobs) * 100
         if status:
             status["percentage"] = percentage
         logger.info(f"已发送{i+1}/{len(jobs)}个岗位，进度{percentage:.2f}%")
+    if status:
+        status["percentage"] = 100
+        status["running"] = 0
     context.close()
     browser.close()
     playwright.stop()
