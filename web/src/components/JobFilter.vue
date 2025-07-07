@@ -2,66 +2,66 @@
     <el-form :inline="true" class="demo-form-inline" style="display: flex; flex-wrap: wrap; gap: 0px;">
         <!-- 工作城市 -->
         <el-form-item label="工作城市">
-            <el-select v-model="localFilters.city" multiple placeholder="工作城市" style="width: 220px;"
-                @change="val => handleSelectChange('city', val)">
+            <el-select v-model="localFilters.city" multiple placeholder="工作城市" style="width: 210px;"
+                @change="val => handleSelectChange('city', val)" size="small">
                 <el-option v-for="item in cityList" :key="item" :label="item" :value="item" />
             </el-select>
         </el-form-item>
 
         <!-- 经验要求 -->
         <el-form-item label="经验要求">
-            <el-select v-model="localFilters.experience" multiple placeholder="经验要求" style="width: 220px;"
-                @change="val => handleSelectChange('experience', val)">
+            <el-select v-model="localFilters.experience" multiple placeholder="经验要求" style="width: 210px;"
+                @change="val => handleSelectChange('experience', val)" size="small">
                 <el-option v-for="item in experienceList" :key="item" :label="item" :value="item" />
             </el-select>
         </el-form-item>
 
         <!-- 学历要求 -->
         <el-form-item label="学历要求">
-            <el-select v-model="localFilters.degree" multiple placeholder="学历要求" style="width: 220px;"
-                @change="val => handleSelectChange('degree', val)">
+            <el-select v-model="localFilters.degree" multiple placeholder="学历要求" style="width: 209px;"
+                @change="val => handleSelectChange('degree', val)" size="small">
                 <el-option v-for="item in degreeList" :key="item" :label="item" :value="item" />
             </el-select>
         </el-form-item>
 
         <!-- 工作岗位 -->
         <el-form-item label="工作岗位">
-            <el-select v-model="localFilters.title" multiple placeholder="工作岗位" style="width: 220px;"
-                @change="val => handleSelectChange('title', val)">
+            <el-select v-model="localFilters.title" multiple placeholder="工作岗位" style="width: 209px;"
+                @change="val => handleSelectChange('title', val)" size="small">
                 <el-option v-for="item in titleList" :key="item" :label="item" :value="item" />
             </el-select>
         </el-form-item>
 
         <!-- 公司行业 -->
         <el-form-item label="公司行业">
-            <el-select v-model="localFilters.industry" multiple placeholder="公司行业" style="width: 220px;"
-                @change="val => handleSelectChange('industry', val)">
+            <el-select v-model="localFilters.industry" multiple placeholder="公司行业" style="width: 210px;"
+                @change="val => handleSelectChange('industry', val)" size="small">
                 <el-option v-for="item in industryList" :key="item" :label="item" :value="item" />
             </el-select>
         </el-form-item>
 
         <!-- 公司规模 -->
         <el-form-item label="公司规模">
-            <el-select v-model="localFilters.scale" multiple placeholder="公司规模" style="width: 220px;"
-                @change="val => handleSelectChange('scale', val)">
+            <el-select v-model="localFilters.scale" multiple placeholder="公司规模" style="width: 210px;"
+                @change="val => handleSelectChange('scale', val)" size="small">
                 <el-option v-for="item in scaleList" :key="item" :label="item" :value="item" />
             </el-select>
         </el-form-item>
 
         <!-- 融资阶段 -->
         <el-form-item label="融资阶段">
-            <el-select v-model="localFilters.stage" multiple placeholder="融资阶段" style="width: 220px;"
-                @change="val => handleSelectChange('stage', val)">
+            <el-select v-model="localFilters.stage" multiple placeholder="融资阶段" style="width: 209px;"
+                @change="val => handleSelectChange('stage', val)" size="small">
                 <el-option v-for="item in stageList" :key="item" :label="item" :value="item" />
             </el-select>
         </el-form-item>
 
         <!-- 按钮 -->
         <el-form-item>
-            <el-button type="primary" @click="$emit('submit')">查询</el-button>
+            <el-button type="primary" @click="$emit('submit')" size="small" style="margin-left: 155px;">查询</el-button>
         </el-form-item>
         <el-form-item>
-            <el-button @click="resetForm">重置</el-button>
+            <el-button @click="resetForm" size="small" style="margin-left: 2px;">重置</el-button>
         </el-form-item>
     </el-form>
 </template>

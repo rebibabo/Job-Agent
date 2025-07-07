@@ -1,7 +1,5 @@
 <template>
-    <div>
-        <h1 style="font-size: 27px;">职位查询系统</h1>
-
+    <div style="max-width: 1200px; margin: 0 auto;">
         <JobFilter v-model="filters" @submit="onSubmit" @reset="onReset" />
 
         <LoadingDots :visible="loading" message="加载中，请稍候" />

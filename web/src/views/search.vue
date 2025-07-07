@@ -1,38 +1,33 @@
 <template>
-    <div>
-        <h1 style="font-size: 27px;">职位搜索系统</h1>
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <!-- 抽屉 -->
+        <el-drawer title="筛选配置" size="50%" :visible.sync="filterDrawerVisible" direction="rtl" destroy-on-close>
+            <div style="margin-left: 20px;">
+                <SearchFilter v-model="filters" @submit="onSubmit" @reset="onReset" />
+            </div>
+        </el-drawer>
 
-        <SearchFilter v-model="filters" @submit="onSubmit" @reset="onReset"/>
-
+        <!-- 原来的三个按钮 -->
         <el-form label-width="0" inline>
             <el-form-item>
-                <el-button type="primary" @click="fetchJobList">历史记录</el-button>
+                <el-button type="primary" @click="filterDrawerVisible = true" size="small">筛选配置</el-button>
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" @click="() => startJob(false)" :loading="loading">开始任务</el-button>
+                <el-button type="primary" @click="() => startJob(false)" :loading="loading" size="small">开始任务</el-button>
             </el-form-item>
             <el-form-item>
-                <el-button type="danger" @click="stopJob">停止任务</el-button>
+                <el-button type="danger" @click="stopJob" size="small">停止任务</el-button>
             </el-form-item>
-
-            
         </el-form>
 
-        <el-progress :percentage="progress" :status="status"/>
-        <br>
+        <!-- 进度条 -->
+        <el-progress :percentage="progress" :status="status" />
+        <br />
 
-        <JobTable
-            :jobList="jobList"
-            :filters="filters"
-            :currentPage="currentPage"
-            :pageSize="pageSize"
-            :totalNumber="totalNumber"
-            :maxHeight="700"
-            @update:currentPage="currentPage = $event"
-            @update:pageSize="pageSize = $event"
-            @pagination-change="fetchJobListAndRestore"
-            ref="jobTableRef"
-        />
+        <!-- 表格 -->
+        <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
+            :totalNumber="totalNumber" @update:currentPage="currentPage = $event"
+            @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableRef" />
     </div>
 </template>
 
@@ -53,6 +48,7 @@ export default {
     },
     data() {
         return {
+            filterDrawerVisible: false,
             progress: 0,
             jobList: [],
             status: null,
@@ -62,12 +58,12 @@ export default {
             currentPage: 1,
             pageSize: 40,
             loading: false,
-            totalNumber: 0
+            totalNumber: 0,
         };
     },
     methods: {
         ...searchMethods,
-        
+
     },
     beforeDestroy() {
         if (this.timer) {

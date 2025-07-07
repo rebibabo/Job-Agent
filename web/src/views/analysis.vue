@@ -1,48 +1,62 @@
 <template>
-    <div>
+    <div style="max-width: 1200px; margin: 0 auto;">
         <LoadingDots :visible="loading" message="加载中，请稍候" />
         <JobFilter v-model="filters" @submit="onSubmit" @reset="onReset" />
         <br>
 
-        <el-drawer title="岗位技能词云图生成" :visible.sync="drawer" :direction="direction" :before-close="handleClose" size="60%">
-            <el-form :inline="true" class="demo-form-inline" style="display: flex; flex-wrap: wrap; gap: 20px; margin-left: 40px;">
-                <el-form-item label="工作岗位">
-                    <el-select v-model="selectedTitle" placeholder="工作岗位" style="width: 220px;">
-                        <el-option v-for="item in titleList" :key="item" :label="item" :value="item" />
-                    </el-select>
-                </el-form-item>
+        <el-tabs type="border-card" style="height: 560px;">
+            <el-tab-pane label="岗位薪资分析">
+                <div style="display: flex; justify-content: center;">
+                    <JobChart title="岗位薪资分析" :data="titleData" xField="title" :yFields="yFields" :sortFields="sortFields" />
+                </div>
+            </el-tab-pane>
 
-                <el-button type="primary" @click="generateWordCloud" style="height: 41px;" :loading="generating">查询</el-button>
-            </el-form>
+            <el-tab-pane label="城市薪资分析">
+                <div style="display: flex; justify-content: center;">
+                    <JobChart title="城市薪资分析" :data="cityData" xField="city" :yFields="yFields" :sortFields="sortFields" />
+                </div>
+            </el-tab-pane>
 
-            <div v-if="wordCloudUrl" style="margin-top: 20px; text-align: center;">
-                <img :src="wordCloudUrl" alt="岗位技能词云图" style="max-width: 100%; max-height: 500px;" />
-            </div>
+            <el-tab-pane label="学历薪资分析">
+                <div style="display: flex; justify-content: center;">
+                    <JobChart title="学历薪资分析" :data="degreeData" xField="degree" :yFields="yFields"
+                        :sortFields="sortFields" />
+                </div>
+            </el-tab-pane>
 
-        </el-drawer>
+            <el-tab-pane label="工作经验薪资分析">
+                <div style="display: flex; justify-content: center;">
+                    <JobChart title="工作经验薪资分析" :data="experienceData" xField="experience" :yFields="yFields"
+                        :sortFields="sortFields" />
+                </div>
+            </el-tab-pane>
 
-        <el-button @click="drawer = true" type="primary"
-            style="height: 36px; line-height: 36px; padding: 0 16px; margin-left: 1000px;">
-            技能分析
-        </el-button>
+            <el-tab-pane label="行业薪资分析">
+                <div style="display: flex; justify-content: center;">
+                    <JobChart title="行业薪资分析" :data="industryData" xField="industry" :yFields="yFields"
+                        :sortFields="sortFields" />
+                </div>
+            </el-tab-pane>
 
+            <el-tab-pane label="岗位技能词云图生成">
+                <el-form :inline="true" class="demo-form-inline"
+                    style="display: flex; flex-wrap: wrap; gap: 20px; margin-left: 40px;">
+                    <el-form-item label="工作岗位">
+                        <el-select v-model="selectedTitle" placeholder="工作岗位" style="width: 220px;">
+                            <el-option v-for="item in titleList" :key="item" :label="item" :value="item" />
+                        </el-select>
+                    </el-form-item>
 
-        <JobChart title="岗位薪资分析" :data="titleData" xField="title" :yFields="yFields" :sortFields="sortFields"
-            chartWidth="2250px" chartHeight="500px" />
+                    <el-button type="primary" @click="generateWordCloud" style="height: 41px;"
+                        :loading="generating" size="small">查询</el-button>
+                </el-form>
 
-        <div style="display: flex; flex-wrap: wrap; gap: 0px;">
-            <JobChart title="城市薪资分析" :data="cityData" xField="city" :yFields="yFields" :sortFields="sortFields"
-                chartWidth="740px" chartHeight="430px" />
+                <div v-if="wordCloudUrl" style="margin-top: 20px; text-align: center;">
+                    <img :src="wordCloudUrl" alt="岗位技能词云图" style="max-width: 100%; height: 70%;" />
+                </div>
+            </el-tab-pane>
+        </el-tabs>
 
-            <JobChart title="学历薪资分析" :data="degreeData" xField="degree" :yFields="yFields" :sortFields="sortFields"
-                chartWidth="550px" chartHeight="430px" />
-
-            <JobChart title="工作经验薪资分析" :data="experienceData" xField="experience" :yFields="yFields"
-                :sortFields="sortFields" chartWidth="530px" chartHeight="430px" />
-
-            <JobChart title="行业薪资分析" :data="industryData" xField="industry" :yFields="yFields" :sortFields="sortFields"
-                chartWidth="400px" chartHeight="430px" />
-        </div>
 
 
 
@@ -109,10 +123,10 @@ export default {
         },
         reset() {
             this.cityData = [],
-            this.industryData = [],
-            this.degreeData = [],
-            this.experienceData = [],
-            this.titleData = []
+                this.industryData = [],
+                this.degreeData = [],
+                this.experienceData = [],
+                this.titleData = []
         },
         async fetchTitleList() {
             try {
@@ -167,7 +181,7 @@ export default {
             } finally {
                 this.generating = false; // 结束加载
             }
-    }
+        }
     },
     async mounted() {
         this.fetchTitleList();

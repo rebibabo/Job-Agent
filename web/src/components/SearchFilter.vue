@@ -3,7 +3,7 @@
         <el-form :inline="true" class="demo-form-inline" style="display: flex; flex-wrap: wrap; gap: 0px;">
             <!-- 工作城市 -->
             <el-form-item label="工作城市">
-                <el-select v-model="localFilters.city" multiple placeholder="工作城市" style="width: 500px;"
+                <el-select v-model="localFilters.city" multiple placeholder="工作城市" style="width: 558px;"
                     @change="val => handleSelectChange('city', val)">
                     <el-option v-for="item in cityList" :key="item" :label="item" :value="item" />
                 </el-select>
@@ -27,23 +27,15 @@
 
             <!-- 工作岗位 -->
             <el-form-item label="工作岗位">
-                <el-select v-model="localFilters.title" multiple placeholder="工作岗位" style="width: 640px;"
+                <el-select v-model="localFilters.title" multiple placeholder="工作岗位" style="width: 558px;"
                     @change="val => handleSelectChange('title', val)">
                     <el-option v-for="item in titleList" :key="item" :label="item" :value="item" />
                 </el-select>
             </el-form-item>
 
-            <!-- 最大查询条数 -->
-            <el-form-item label="最大条数/每城市/每岗位">
-                <el-select v-model="localFilters.limitNum" placeholder="最大条数" style="width: 120px;"
-                    @change="val => handleSelectChange('limitNum', val)">
-                    <el-option v-for="item in limitList" :key="item" :label="item" :value="item" />
-                </el-select>
-            </el-form-item>
-
             <!-- 公司行业 -->
             <el-form-item label="公司行业">
-                <el-select v-model="localFilters.industry" multiple placeholder="公司行业" style="width: 500px;"
+                <el-select v-model="localFilters.industry" multiple placeholder="公司行业" style="width: 558px;"
                     @change="val => handleSelectChange('industry', val)">
                     <el-option v-for="item in industryList" :key="item" :label="item" :value="item" />
                 </el-select>
@@ -67,22 +59,31 @@
 
             <!-- 关键词 -->
             <el-form-item label="关键词" label-width="68px">
-                <el-input v-model="localFilters.keyword" placeholder="请输入关键词" style="width: 634px;" />
+                <el-input v-model="localFilters.keyword" placeholder="请输入关键词" style="width: 558px;" />
             </el-form-item>
+
+            <!-- 最大查询条数 -->
+            <el-form-item label="最大条数/每城市&岗位">
+                <el-select v-model="localFilters.limitNum" placeholder="最大条数" style="width: 181px;"
+                    @change="val => handleSelectChange('limitNum', val)">
+                    <el-option v-for="item in limitList" :key="item" :label="item" :value="item" />
+                </el-select>
+            </el-form-item>
+
             <!-- 按钮 -->
             <el-form-item>
-                <el-button @click="resetForm">重置</el-button>
+                <el-button @click="resetForm" size="medium">重置</el-button>
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" @click="openSaveRuleDialog">保存规则</el-button>
+                <el-button type="primary" @click="openSaveRuleDialog" size="medium">保存规则</el-button>
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" @click="openLoadRuleDialog">加载规则</el-button>
+                <el-button type="primary" @click="openLoadRuleDialog" size="medium">加载规则</el-button>
             </el-form-item>
         </el-form>
 
         <!-- 保存规则弹窗 -->
-        <el-dialog title="保存规则" :visible.sync="ruleDialogVisible" width="500px">
+        <el-dialog title="保存规则" :visible.sync="ruleDialogVisible" width="500px" append-to-body>  <!-- 加上append-to-body置顶 -->
             <el-form :model="ruleInfo" label-width="80px">
                 <el-form-item label="规则名称">
                     <el-input v-model="ruleInfo.ruleName" placeholder="请输入规则名称" @keyup.enter.native="onRuleNameEnter"/>
@@ -107,7 +108,7 @@
         </el-dialog>
 
         <!-- 加载规则弹窗 -->
-        <el-dialog title="加载规则" :visible.sync="loadRuleDialogVisible" width="800px">
+        <el-dialog title="加载规则" :visible.sync="loadRuleDialogVisible" width="800px" append-to-body>
             <el-table :data="ruleList" style="width: 100%">
                 <el-table-column prop="ruleName" label="规则名称" width="200" />
                 <el-table-column prop="ruleDescription" label="规则描述" />
@@ -207,6 +208,11 @@ export default {
                 console.error('fetchTitleList error:', error);
             }
         },
+        getJobList() {
+            console.log(this.localFilters)
+            this.$emit('change', { ...this.localFilters });
+            this.$emit('submit');
+        },
         handleSelectChange(field, val) {
             const last = val[val.length - 1];
             if (val.length === 0) {
@@ -218,7 +224,7 @@ export default {
             } else {
                 this.localFilters[field] = val;
             }
-            this.$emit('change', { ...this.localFilters });
+            this.getJobList();
         },
         resetForm() {
             this.localFilters = {
@@ -228,11 +234,11 @@ export default {
                 experience: ['不限'],
                 degree: ['不限'],
                 title: ['不限'],
-                industry: ['不限'],
+                industry: ['互联网'],
                 scale: ['不限'],
                 stage: ['不限']
             };
-            this.$emit('change', { ...this.localFilters });
+            this.getJobList();
             this.$emit('reset');
         },
         openSaveRuleDialog() {
@@ -307,8 +313,8 @@ export default {
                 stage: rule.stage ? rule.stage.split(',') : ['不限']
             };
             this.loadRuleDialogVisible = false;
-            this.$emit('change', { ...this.localFilters });
-            this.$emit('submit');
+            this.getJobList();
+            
         },
         deleteRule(rule) {
             this.$confirm(`确定要删除规则 "${rule.ruleName}" 吗？`, '提示', {

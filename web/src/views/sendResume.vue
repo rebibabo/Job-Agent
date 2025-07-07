@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div style="max-width: 1200px; margin: 0 auto;">
         <el-steps :active="stepIndex" finish-status="success" align-center>
             <el-step title="步骤 1" description="解析简历信息"></el-step>
             <el-step title="步骤 2" description="爬取岗位数据"></el-step>
@@ -8,12 +8,12 @@
             <el-step title="步骤 5" description="简历投递"></el-step>
         </el-steps>
 
-        <el-dialog title="预览简历" :visible.sync="previewDialog" width="60%" top="50px">
-            <iframe v-if="previewUrl" :src="previewUrl" width="100%" height="1000px" style="border:none"></iframe>
+        <el-dialog title="预览简历" :visible.sync="previewDialog" width="60%" top="40px">
+            <iframe v-if="previewUrl" :src="previewUrl" width="100%" height="600px" style="border:none"></iframe>
         </el-dialog>
 
         <br>
-        <el-tabs v-model="activeTab" type="border-card" style="height: 1080px;">
+        <el-tabs v-model="activeTab" type="border-card" style="height: auto;">
             <!-- 简历上传 -->
             <el-tab-pane label="选择简历" name="resume">
                 <div style="margin-left: 40px;"> 上传简历 </div>
@@ -32,7 +32,7 @@
                 <br>
                 <div style="margin-left: 40px;"> 简历列表 </div>
                 <br>
-                <el-table :data="resumeList" border style="width: 50%; margin-left: 40px;"
+                <el-table :data="resumeList" border style="width: auto; max-width: 1000px; margin-left: 40px;"
                     @selection-change="handleSelectionChange" ref="resumeTable">
                     <el-table-column type="selection" width="55">
                     </el-table-column>
@@ -50,7 +50,7 @@
 
                 <br>
                 <el-button type="primary" @click="handleParse" :disabled="selectedResume == null"
-                    style="margin-left: 40px;">
+                    style="margin-left: 40px;" size="small">
                     选择简历
                 </el-button>
                 <br>
@@ -66,7 +66,7 @@
                 </el-timeline>
 
                 <div v-if="finish" style="display: flex; justify-content: center; margin-top: 20px;">
-                    <el-button type="primary" @click="handleNext" style="margin-left: 40px;">下一步</el-button>
+                    <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
                 </div>
             </el-tab-pane>
 
@@ -77,10 +77,10 @@
                 <el-form label-width="0" inline>
 
                     <el-form-item>
-                        <el-button type="primary" @click="() => startJob(true)" :loading="crawlLoading">开始任务</el-button>
+                        <el-button type="primary" @click="() => startJob(true)" :loading="crawlLoading" size="small">开始任务</el-button>
                     </el-form-item>
                     <el-form-item>
-                        <el-button type="danger" @click="() => stopJob(1)">停止任务</el-button>
+                        <el-button type="danger" @click="() => stopJob(1)" size="small">停止任务</el-button>
                     </el-form-item>
 
                 </el-form>
@@ -94,7 +94,7 @@
 
                 <div v-if="timer === null && jobList.length !== 0"
                     style="display: flex; justify-content: center; margin-top: 20px;">
-                    <el-button type="primary" @click="handleNext" style="margin-left: 40px;">下一步</el-button>
+                    <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
                 </div>
 
             </el-tab-pane>
@@ -153,10 +153,10 @@
 
                 <el-form label-width="0" inline>
                     <el-form-item>
-                        <el-button type="primary" @click="handleFilter" :loading="filterLoading">开始过滤</el-button>
+                        <el-button type="primary" @click="handleFilter" :loading="filterLoading" size="small">开始过滤</el-button>
                     </el-form-item>
                     <el-form-item>
-                        <el-button type="danger" @click="() => stopJob(2)">停止任务</el-button>
+                        <el-button type="danger" @click="() => stopJob(2)" size="small">停止任务</el-button>
                     </el-form-item>
 
 
@@ -171,7 +171,7 @@
                     @selection-change="handleJobSelectionChange" />
 
                 <div style="display: flex; justify-content: center; margin-top: 20px;">
-                    <el-button type="primary" @click="handleNext" style="margin-left: 40px;">下一步</el-button>
+                    <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
                 </div>
 
             </el-tab-pane>
@@ -229,10 +229,10 @@
 
                 <el-form label-width="0" inline>
                     <el-form-item>
-                        <el-button type="primary" @click="handleRank" :loading="rankLoading">开始排序</el-button>
+                        <el-button type="primary" @click="handleRank" :loading="rankLoading" size="small">开始排序</el-button>
                     </el-form-item>
                     <el-form-item>
-                        <el-button type="danger" @click="() => stopJob(3)">停止任务</el-button>
+                        <el-button type="danger" @click="() => stopJob(3)" size="small">停止任务</el-button>
                     </el-form-item>
 
 
@@ -247,7 +247,7 @@
                     @selection-change="handleJobSelectionChange" :rankScore="true" />
 
                 <div style="display: flex; justify-content: center; margin-top: 20px;">
-                    <el-button type="primary" @click="handleNext" style="margin-left: 40px;">下一步</el-button>
+                    <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
                 </div>
             </el-tab-pane>
             
@@ -296,10 +296,10 @@
 
                 <el-form inline>
                     <el-form-item>
-                        <el-button type="primary" @click="startSendResume" :loading="sendLoading">开始投递</el-button>
+                        <el-button type="primary" @click="startSendResume" :loading="sendLoading" size="small">开始投递</el-button>
                     </el-form-item>
                     <el-form-item>
-                        <el-button type="danger" @click="() => stopJob(4)">停止投递</el-button>
+                        <el-button type="danger" @click="() => stopJob(4)" size="small">停止投递</el-button>
                     </el-form-item>
                 </el-form>
 

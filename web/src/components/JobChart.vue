@@ -16,7 +16,7 @@
         <div :ref="chartRefName" :style="chartStyle"></div>
     </div>
 </template>
-  
+
 <script>
 import * as echarts from "echarts";
 
@@ -32,14 +32,14 @@ export default {
             // 每个元素：{ label: '岗位个数', value: 'count', yAxisIndex: 0 }
         },
         sortFields: { type: Array, required: true },
-        chartWidth: { type: String, default: "1000" },
-        chartHeight: { type: String, default: "500px" }
     },
     data() {
         return {
             chartInstance: null,
             localSortField: this.sortFields[0].value,
-            localIsAscending: false
+            localIsAscending: false,
+            dynamicWidth: "1000px",
+            isFirstRender: true // 添加首次渲染标志
         };
     },
     computed: {
@@ -48,16 +48,32 @@ export default {
         },
         chartStyle() {
             return {
-                width: this.chartWidth,
-                height: this.chartHeight
+                width: this.dynamicWidth,
+                height: '450px'
             };
         }
     },
     mounted() {
-        this.chartInstance = echarts.init(this.$refs[this.chartRefName]);
-        this.updateChart();
+        this.initChart();
     },
     methods: {
+        initChart() {
+            this.calculateWidth();
+            this.$nextTick(() => {
+                this.chartInstance = echarts.init(this.$refs[this.chartRefName]);
+                this.updateChart();
+                this.isFirstRender = false;
+            });
+        },
+        calculateWidth() {
+            if (this.data && this.data.length > 0) {
+                const baseWidth = this.data.length * 150;
+                const maxWidth = 1150;
+                const minWidth = 400;
+                const finalWidth = Math.max(Math.min(baseWidth, maxWidth), minWidth);
+                this.dynamicWidth = `${finalWidth}px`;
+            }
+        },
         updateChart() {
             const sortedData = [...this.data].sort((a, b) => {
                 const field = this.localSortField;
@@ -72,8 +88,11 @@ export default {
             const series = this.yFields.map(y => ({
                 name: y.label,
                 type: "bar",
-                yAxisIndex: y.yAxisIndex || 0, // 默认为左轴
-                data: sortedData.map(item => item[y.value] || 0)
+                yAxisIndex: y.yAxisIndex || 0,
+                data: sortedData.map(item => item[y.value] || 0),
+                animation: true, // 确保动画开启
+                animationDuration: 1000, // 设置动画持续时间
+                animationEasing: 'elasticOut' // 设置动画缓动效果
             }));
 
             const option = {
@@ -81,7 +100,10 @@ export default {
                 tooltip: { trigger: 'axis' },
                 legend: { data: this.yFields.map(y => y.label), right: 10 },
                 grid: { top: 80, bottom: 120, left: 70, right: 70 },
-                xAxis: { data: xAxisData, axisLabel: {interval: 0,  rotate: 45  } },
+                xAxis: { 
+                    data: xAxisData, 
+                    axisLabel: { interval: 0, rotate: 45 } 
+                },
                 yAxis: [
                     {
                         type: 'value',
@@ -91,23 +113,41 @@ export default {
                         type: 'value',
                         name: '岗位个数',
                         position: 'right'
-                        
                     }
                 ],
-                series: series
+                series: series,
+                animation: true, // 确保图表整体动画开启
+                animationDuration: 1000,
+                animationEasing: 'elasticOut'
             };
 
-            this.chartInstance.setOption(option);
+            // 如果是首次渲染，直接设置option
+            // 如果不是首次渲染，使用setOption的notMerge模式来保留动画
+            if (this.chartInstance) {
+                this.chartInstance.setOption(option, {
+                    notMerge: !this.isFirstRender
+                });
+            }
         }
     },
     watch: {
         data: {
             handler() {
-            this.updateChart();
+                this.calculateWidth();
+                this.$nextTick(() => {
+                    if (this.chartInstance) {
+                        this.chartInstance.resize();
+                        this.updateChart();
+                    }
+                });
             },
-            deep: true // 深度监听，防止数据内部变化不触发
+            deep: true
         }
+    },
+    beforeDestroy() {
+        if (this.chartInstance) {
+            this.chartInstance.dispose();
         }
+    }
 };
 </script>
-  

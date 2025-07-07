@@ -233,18 +233,20 @@ def send_cv(user_id, jobs: List[JobInfo], cv_path, message, polish, model, tempe
         if job.sentCv:     # 跳过已发送的岗位
             continue
         page.goto(job.url, wait_until="networkidle")
-        if page.locator(".btn-more").count() > 0:       # 该职位已关闭
-            continue        
-        page.locator(".btn-container .btn-startchat").click()       # 立即沟通
-        page.wait_for_timeout(1000)
-        if page.locator(".dialog-title .icon-close").count() > 0:
-            page.locator(".dialog-title .icon-close").click()       # 关闭弹窗
-            page.locator(".btn-container .btn-startchat").click()   # 再次点击立即沟通
-        page.wait_for_selector("#chat-input")
         input_box = page.locator("#chat-input")
         if polish:
             message = polish_message(message, resume.summary, job, model=model, temperature=temperature)
         logger.info(f"正在发送简历到{job.companyName}的{job.title}岗位，消息：{message}")
+        if page.locator(".btn-more").count() > 0:       # 该职位已关闭
+            continue     
+           
+        # page.locator(".btn-container .btn-startchat").click()       # 立即沟通
+        # page.wait_for_timeout(1000)
+        # if page.locator(".dialog-title .icon-close").count() > 0:
+        #     page.locator(".dialog-title .icon-close").click()       # 关闭弹窗
+        #     page.locator(".btn-container .btn-startchat").click()   # 再次点击立即沟通
+        # page.wait_for_selector("#chat-input")
+       
         # input_box.fill(message)
         # page.wait_for_timeout(2000)
         # page.locator("button[type=send]").click()
