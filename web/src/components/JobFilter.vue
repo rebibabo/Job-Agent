@@ -165,5 +165,9 @@ export default {
 };
 </script>
   
-<style scoped></style>
+<style scoped>
+.demo-form-inline ::v-deep(.el-form-item) {
+  margin-bottom: 6px; /* 默认是 18px 左右，改小一点 */
+}
+</style>
   

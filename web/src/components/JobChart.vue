@@ -49,7 +49,7 @@ export default {
         chartStyle() {
             return {
                 width: this.dynamicWidth,
-                height: '450px'
+                height: '480px'
             };
         }
     },

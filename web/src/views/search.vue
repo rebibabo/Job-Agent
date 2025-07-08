@@ -1,7 +1,7 @@
 <template>
     <div style="max-width: 1200px; margin: 0 auto;">
         <!-- 抽屉 -->
-        <el-drawer title="筛选配置" size="50%" :visible.sync="filterDrawerVisible" direction="rtl" destroy-on-close>
+        <el-drawer title="查询规则" size="50%" :visible.sync="filterDrawerVisible" direction="rtl" destroy-on-close>
             <div style="margin-left: 20px;">
                 <SearchFilter v-model="filters" @submit="onSubmit" @reset="onReset" />
             </div>
@@ -10,7 +10,7 @@
         <!-- 原来的三个按钮 -->
         <el-form label-width="0" inline>
             <el-form-item>
-                <el-button type="primary" @click="filterDrawerVisible = true" size="small">筛选配置</el-button>
+                <el-button type="primary" @click="filterDrawerVisible = true" size="small">查询规则</el-button>
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" @click="() => startJob(false)" :loading="loading" size="small">开始任务</el-button>
@@ -21,12 +21,12 @@
         </el-form>
 
         <!-- 进度条 -->
-        <el-progress :percentage="progress" :status="status" />
+        <el-progress :percentage="progress" :status="status" style="margin-top: -19px;"/>
         <br />
 
         <!-- 表格 -->
         <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
-            :totalNumber="totalNumber" @update:currentPage="currentPage = $event"
+            :totalNumber="totalNumber" @update:currentPage="currentPage = $event" :heightRatio="0.7"
             @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableRef" />
     </div>
 </template>

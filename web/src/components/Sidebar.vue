@@ -15,22 +15,22 @@
         <span slot="title">首页</span>
       </el-menu-item>
 
-      <el-menu-item index="/search">
+      <el-menu-item index="/search" @click="$emit('menu-click', '职位获取系统')">
         <i class="el-icon-s-data"></i>
         <span slot="title">职位获取</span>
       </el-menu-item>
       
-      <el-menu-item index="/job">
+      <el-menu-item index="/job" @click="$emit('menu-click', '职位查询系统')">
         <i class="el-icon-s-data"></i>
         <span slot="title">职位查询</span>
       </el-menu-item>
 
-      <el-menu-item index="/analysis">
+      <el-menu-item index="/analysis" @click="$emit('menu-click', '职位分析系统')">
         <i class="el-icon-s-data"></i>
         <span slot="title">职位分析</span>
       </el-menu-item>
 
-      <el-menu-item index="/sendResume">
+      <el-menu-item index="/sendResume" @click="$emit('menu-click', '智能投递系统')">
         <i class="el-icon-s-data"></i>
         <span slot="title">智能投递</span>
       </el-menu-item>

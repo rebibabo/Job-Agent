@@ -1,11 +1,11 @@
 <template>
-    <div style="max-width: 1200px; margin: 0 auto;">
+    <div style="max-width: 1200px; margin: 0 auto; height: 80px">
         <el-steps :active="stepIndex" finish-status="success" align-center>
-            <el-step title="步骤 1" description="解析简历信息"></el-step>
-            <el-step title="步骤 2" description="爬取岗位数据"></el-step>
-            <el-step title="步骤 3" description="过滤岗位"></el-step>
-            <el-step title="步骤 4" description="匹配度排序"></el-step>
-            <el-step title="步骤 5" description="简历投递"></el-step>
+            <el-step title="解析简历信息"></el-step>
+            <el-step title="爬取岗位数据"></el-step>
+            <el-step title="过滤岗位"></el-step>
+            <el-step title="匹配度排序"></el-step>
+            <el-step title="简历投递"></el-step>
         </el-steps>
 
         <el-dialog title="预览简历" :visible.sync="previewDialog" width="60%" top="40px">
@@ -13,57 +13,61 @@
         </el-dialog>
 
         <br>
-        <el-tabs v-model="activeTab" type="border-card" style="height: auto;">
+        <el-tabs v-model="activeTab" type="border-card" style="height: auto; min-height: 600px;">
             <!-- 简历上传 -->
             <el-tab-pane label="选择简历" name="resume">
-                <div style="margin-left: 40px;"> 上传简历 </div>
-                <br>
-                <el-form :inline="true" class="demo-form-inline"
-                    style="display: flex; flex-wrap: wrap; gap: 20px; margin-left: 40px;">
-                    <el-upload class="upload-demo" drag :auto-upload="true" action="#" multiple
-                        :before-upload="beforeUpload">
-                        <i class="el-icon-upload"></i>
-                        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-                        <div class="el-upload__tip">只能上传PDF文件，且不超过4MB</div>
-                    </el-upload>
-                </el-form>
+                <div style="display: flex; gap: 40px; margin: 20px 40px;">
+                    <!-- 左侧：上传简历 -->
+                    <div style="flex: 1; min-width: 320px;">
+                        <div style="margin-bottom: 10px;">上传简历</div>
+                        <el-form :inline="true" class="demo-form-inline">
+                            <el-upload class="upload-demo" drag :auto-upload="true" action="#" multiple
+                                :before-upload="beforeUpload">
+                                <i class="el-icon-upload"></i>
+                                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                                <div class="el-upload__tip">只能上传PDF文件，且不超过4MB</div>
+                            </el-upload>
+                        </el-form>
+                    </div>
 
+                    <!-- 右侧：简历列表 -->
+                    <div style="flex: 1.5; min-width: 400px; margin-left: -90px;">
+                        <div style="margin-bottom: 10px;">简历列表</div>
+                        <el-table :data="resumeList" border @selection-change="handleSelectionChange"
+                            ref="resumeTable">
+                            <el-table-column type="selection" width="40" />
+                            <el-table-column prop="name" sortable label="简历名称" width="300" />
+                            <el-table-column prop="datetime" sortable label="创建时间" width="160" />
+                            <el-table-column label="操作" min-width="120">
+                                <template #default="{ row }">
+                                    <el-button @click="handleView(row.name)" type="primary" size="mini"
+                                        style="width: 56px;">查看</el-button>
+                                    <el-button @click="confirmDelete(row.name)" type="danger" size="mini"
+                                        style="width: 56px;">删除</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <br>
+                        <el-button type="primary" @click="handleParse" :disabled="selectedResume == null"
+                            style="margin-left: 40px;" size="small">
+                            选择简历
+                        </el-button>
+                        <br>
+                        <br>
+                        <el-timeline>
+                            <el-timeline-item v-for="(activity, index) in activities" :key="index"
+                                :timestamp="activity.timestamp"
+                                :color="!startParsing ? '#C0C4CC' : activeIndex <= index ? '#409EFF' : '#67C23A'"
+                                :icon="activeIndex <= index && startParsing ? 'el-icon-loading' : ''">
+                                <span :style="{ color: activeIndex > index ? '#000000' : '#C0C4CC' }">
+                                    {{ activity.content }}
+                                </span>
+                            </el-timeline-item>
+                        </el-timeline>
 
-                <br>
-                <div style="margin-left: 40px;"> 简历列表 </div>
-                <br>
-                <el-table :data="resumeList" border style="width: auto; max-width: 1000px; margin-left: 40px;"
-                    @selection-change="handleSelectionChange" ref="resumeTable">
-                    <el-table-column type="selection" width="55">
-                    </el-table-column>
-                    <el-table-column prop="name" sortable label="简历名称" width="400" />
-                    <el-table-column prop="datetime" sortable label="创建时间" width="300" />
-                    <el-table-column label="操作" min-width="160">
-                        <template #default="{ row }">
-                            <el-button @click="handleView(row.name)" type="primary" size="mini"
-                                style="width: 60px;">查看</el-button>
-                            <el-button @click="confirmDelete(row.name)" type="danger" size="mini"
-                                style="width: 60px;">删除</el-button>
-                        </template>
-                    </el-table-column>
-                </el-table>
+                    </div>
+                </div>
 
-                <br>
-                <el-button type="primary" @click="handleParse" :disabled="selectedResume == null"
-                    style="margin-left: 40px;" size="small">
-                    选择简历
-                </el-button>
-                <br>
-                <br>
-                <el-timeline>
-                    <el-timeline-item v-for="(activity, index) in activities" :key="index" :timestamp="activity.timestamp"
-                        :color="!startParsing ? '#C0C4CC' : activeIndex <= index ? '#409EFF' : '#67C23A'"
-                        :icon="activeIndex <= index && startParsing ? 'el-icon-loading' : ''">
-                        <span :style="{ color: activeIndex > index ? '#000000' : '#C0C4CC' }">
-                            {{ activity.content }}
-                        </span>
-                    </el-timeline-item>
-                </el-timeline>
 
                 <div v-if="finish" style="display: flex; justify-content: center; margin-top: 20px;">
                     <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
@@ -72,12 +76,20 @@
 
             <!-- 爬取数据 -->
             <el-tab-pane label="获取岗位数据" name="crawl">
-                <SearchFilter v-model="filters" @submit="onSubmit" @reset="onReset" />
+                <!-- 抽屉 -->
+                <el-drawer title="查询规则" size="50%" :visible.sync="filterDrawerVisible" direction="rtl" destroy-on-close>
+                    <div style="margin-left: 20px;">
+                        <SearchFilter v-model="filters" @submit="onSubmit" @reset="onReset" />
+                    </div>
+                </el-drawer>
 
-                <el-form label-width="0" inline>
-
+                <el-form label-width="0" inline style="margin-bottom: -18px;">
                     <el-form-item>
-                        <el-button type="primary" @click="() => startJob(true)" :loading="crawlLoading" size="small">开始任务</el-button>
+                        <el-button type="primary" @click="filterDrawerVisible = true" size="small">查询规则</el-button>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" @click="() => startJob(true)" :loading="crawlLoading"
+                            size="small">开始任务</el-button>
                     </el-form-item>
                     <el-form-item>
                         <el-button type="danger" @click="() => stopJob(1)" size="small">停止任务</el-button>
@@ -89,11 +101,11 @@
                 <br>
 
                 <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
-                    :totalNumber="totalNumber" :maxHeight="600" @update:currentPage="currentPage = $event"
+                    :totalNumber="totalNumber" :maxHeight="600" @update:currentPage="currentPage = $event" :heightRatio="0.5"
                     @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableCrawl" />
 
                 <div v-if="timer === null && jobList.length !== 0"
-                    style="display: flex; justify-content: center; margin-top: 20px;">
+                    style="display: flex; justify-content: center; margin-top: 10px;">
                     <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
                 </div>
 
@@ -102,19 +114,37 @@
             <!-- 过滤岗位 -->
             <el-tab-pane label="过滤岗位" name="filter">
 
-                <el-form :model="filterForm" :inline="true">
-                    <el-form-item label-width="120px">
+                <el-form :model="filterForm" :inline="true" class="demo-form-inline">
+                    <el-form-item label-width="110px">
                         <template #label>
                             批处理大小
                             <el-tooltip class="item" effect="dark" content="每次处理的岗位数量，越大处理速度越快，但可能会影响准确性。" placement="top">
                                 <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
                             </el-tooltip>
                         </template>
-                        <el-slider v-model="filterForm.batchSize" style="width: 300px;" :step="10"
+                        <el-slider v-model="filterForm.batchSize" style="width: 100px;" :step="10"
                             :format-tooltip="formatBatchSize"></el-slider>
                     </el-form-item>
 
-                    <el-form-item label-width="120px">
+                    <el-form-item label-width="70px">
+                        <template #label>
+                            温度
+                            <el-tooltip class="item" effect="dark" content="温度用于控制生成的随机性，值越大回答越发散，越小则更确定。" placement="top">
+                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                            </el-tooltip>
+                        </template>
+                        <el-slider v-model="filterForm.temperature" style="width: 100px;" :step="5"
+                            :format-tooltip="formatTemperature" />
+                    </el-form-item>
+
+                    <el-form-item label="选择模型" label-width="80px">
+                        <el-select v-model="filterForm.model" placeholder="请选择模型" style="width: 130px;" size="small">
+                            <el-option v-for="item in models" :key="item" :label="item" :value="item">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+
+                    <el-form-item label-width="100px">
                         <template #label>
                             过滤规则
                             <el-tooltip class="item" effect="dark" content="筛选掉不符合过滤要求的职位，包括实习/全职、学历要求、岗位要求、公司要求、地点要求等。"
@@ -122,38 +152,16 @@
                                 <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
                             </el-tooltip>
                         </template>
-                        <el-input v-model="filterForm.filterQuery" placeholder="请输入过滤规则" style="width: 600px;" />
-                    </el-form-item>
-
-
-                </el-form>
-
-                <el-form :model="filterForm" :inline="true">
-                    <el-form-item label-width="120px">
-                        <template #label>
-                            温度
-                            <el-tooltip class="item" effect="dark" content="温度用于控制生成的随机性，值越大回答越发散，越小则更确定。" placement="top">
-                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
-                            </el-tooltip>
-                        </template>
-                        <el-slider v-model="filterForm.temperature" style="width: 300px;" :step="5"
-                            :format-tooltip="formatTemperature" />
-                    </el-form-item>
-
-
-                    <el-form-item label="选择模型" label-width="120px">
-                        <el-select v-model="filterForm.model" placeholder="请选择模型"
-                            style="width: 300px; margin-right: 192px;">
-                            <el-option v-for="item in models" :key="item" :label="item" :value="item">
-                            </el-option>
-                        </el-select>
+                        <el-input v-model="filterForm.filterQuery" placeholder="请输入过滤规则" style="width: 380px;"
+                            size="small" />
                     </el-form-item>
 
                 </el-form>
 
-                <el-form label-width="0" inline>
+                <el-form label-width="0" inline class="demo-form-inline">
                     <el-form-item>
-                        <el-button type="primary" @click="handleFilter" :loading="filterLoading" size="small">开始过滤</el-button>
+                        <el-button type="primary" @click="handleFilter" :loading="filterLoading"
+                            size="small">开始过滤</el-button>
                     </el-form-item>
                     <el-form-item>
                         <el-button type="danger" @click="() => stopJob(2)" size="small">停止任务</el-button>
@@ -167,10 +175,10 @@
                 <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
                     :totalNumber="totalNumber" :maxHeight="600" @update:currentPage="currentPage = $event"
                     @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableFilter"
-                    :deleteAll="false" :sentCVFrame="true" :selectedJobIds="selectedFilteredJobIds"
+                    :deleteAll="false" :sentCVFrame="true" :selectedJobIds="selectedFilteredJobIds" :heightRatio="0.44"
                     @selection-change="handleJobSelectionChange" />
 
-                <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <div style="display: flex; justify-content: center; margin-top: 10px;">
                     <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
                 </div>
 
@@ -178,19 +186,39 @@
 
             <!-- 匹配度排序 -->
             <el-tab-pane label="匹配度排序" name="sort">
-                <el-form :model="rankForm" :inline="true">
-                    <el-form-item label-width="120px">
+                <el-form :model="rankForm" :inline="true" class="demo-form-inline">
+                    <el-form-item label-width="110px">
                         <template #label>
                             批处理大小
                             <el-tooltip class="item" effect="dark" content="每次处理的岗位数量，越大处理速度越快，但可能会影响准确性。" placement="top">
                                 <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
                             </el-tooltip>
                         </template>
-                        <el-slider v-model="rankForm.batchSize" style="width: 300px;" :step="10"
-                            :format-tooltip="formatBatchSize"></el-slider>
+                        <el-slider v-model="rankForm.batchSize" style="width: 100px;" :step="10"
+                            :format-tooltip="formatBatchSize" size="small"></el-slider>
                     </el-form-item>
 
-                    <el-form-item label-width="120px">
+
+                    <el-form-item label-width="70px">
+                        <template #label>
+                            温度
+                            <el-tooltip class="item" effect="dark" content="温度用于控制生成的随机性，值越大回答越发散，越小则更确定。" placement="top">
+                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                            </el-tooltip>
+                        </template>
+                        <el-slider v-model="rankForm.temperature" style="width: 100px;" :step="5"
+                            :format-tooltip="formatTemperature" size="small" />
+                    </el-form-item>
+
+
+                    <el-form-item label="选择模型" label-width="80px">
+                        <el-select v-model="rankForm.model" placeholder="请选择模型" style="width: 130px;" size="small">
+                            <el-option v-for="item in models" :key="item" :label="item" :value="item">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+
+                    <el-form-item label-width="100px">
                         <template #label>
                             最低分数
                             <el-tooltip class="item" effect="dark" content="设置最低岗位匹配度分数的阈值" placement="top">
@@ -198,36 +226,13 @@
                                     @change="handleThresholdChange" />
                             </el-tooltip>
                         </template>
-                        <el-slider v-model="rankForm.minScore" style="width: 300px;" :step="10"
-                            :format-tooltip="formatScore" />
-                    </el-form-item>
-
-
-                </el-form>
-
-                <el-form :model="rankForm" :inline="true">
-                    <el-form-item label-width="120px">
-                        <template #label>
-                            温度
-                            <el-tooltip class="item" effect="dark" content="温度用于控制生成的随机性，值越大回答越发散，越小则更确定。" placement="top">
-                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
-                            </el-tooltip>
-                        </template>
-                        <el-slider v-model="rankForm.temperature" style="width: 300px;" :step="5"
-                            :format-tooltip="formatTemperature" />
-                    </el-form-item>
-
-
-                    <el-form-item label="选择模型" label-width="120px">
-                        <el-select v-model="rankForm.model" placeholder="请选择模型" style="width: 300px; margin-right: 192px;">
-                            <el-option v-for="item in models" :key="item" :label="item" :value="item">
-                            </el-option>
-                        </el-select>
+                        <el-slider v-model="rankForm.minScore" style="width: 200px;" :step="10"
+                            :format-tooltip="formatScore" size="small" />
                     </el-form-item>
 
                 </el-form>
 
-                <el-form label-width="0" inline>
+                <el-form label-width="0" inline style="margin-bottom: -19px;">
                     <el-form-item>
                         <el-button type="primary" @click="handleRank" :loading="rankLoading" size="small">开始排序</el-button>
                     </el-form-item>
@@ -244,24 +249,52 @@
                     :totalNumber="totalNumber" :maxHeight="600" @update:currentPage="currentPage = $event"
                     @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableRank"
                     :deleteAll="false" :sentCVFrame="true" :selectedJobIds="selectedFilteredJobIds"
-                    @selection-change="handleJobSelectionChange" :rankScore="true" />
+                    @selection-change="handleJobSelectionChange" :rankScore="true" :heightRatio="0.44"/>
 
-                <div style="display: flex; justify-content: center; margin-top: 20px;">
+                <div style="display: flex; justify-content: center; margin-top: 10px;">
                     <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
                 </div>
             </el-tab-pane>
-            
+
             <!-- 简历投递 -->
             <el-tab-pane label="简历投递" name="deliver">
                 <el-form inline label-width="80px" :model="sendForm">
-                    <el-form-item>
+                    <el-form-item label="选择模型" label-width="80px">
+                        <el-select v-model="sendForm.model" placeholder="请选择模型" style="width: 130px;" size="small">
+                            <el-option v-for="item in models" :key="item" :label="item" :value="item">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+
+                    <el-form-item label-width="100px">
                         <template #label>
-                            问候语
-                            <el-tooltip class="item" effect="dark" content="发送给Boss的问候语，如：“hr您好，我是xxx，于xx年毕业于xxx学校...”" placement="top">
+                            温度
+                            <el-tooltip class="item" effect="dark" content="温度用于控制生成的随机性，值越大回答越发散，越小则更确定。" placement="top">
                                 <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
                             </el-tooltip>
                         </template>
-                        <el-input v-model="sendForm.message" placeholder="请输入问候语" style="width: 400px;" />
+                        <el-slider v-model="sendForm.temperature" style="width: 100px;" :step="5"
+                            :format-tooltip="formatTemperature" />
+                    </el-form-item>
+
+                    <el-form-item label-width="100px">
+                        <template #label>
+                            问候语
+                            <el-tooltip class="item" effect="dark" content="发送给Boss的问候语，如：“hr您好，我是xxx，于xx年毕业于xxx学校...”"
+                                placement="top">
+                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                            </el-tooltip>
+                        </template>
+                        <el-select v-model="sendForm.message" placeholder="请输入或选择问候语" filterable allow-create
+                            default-first-option style="width: 300px" size="small">
+                            <el-option v-for="(item, index) in greetingsHistory" :key="item" :label="item" :value="item">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>{{ item }}</span>
+                                    <el-button type="text" icon="el-icon-close" size="mini"
+                                        @click.stop="removeGreeting(index)" />
+                                </div>
+                            </el-option>
+                        </el-select>
                     </el-form-item>
 
                     <el-form-item>
@@ -271,46 +304,30 @@
                                 <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
                             </el-tooltip>
                         </template>
-                        <el-switch v-model="sendForm.polish"/>
-                        
+                        <el-switch v-model="sendForm.polish" />
+
                     </el-form-item>
 
-                    <el-form-item label="选择模型" label-width="120px">
-                        <el-select v-model="sendForm.model" placeholder="请选择模型" style="width: 300px;">
-                            <el-option v-for="item in models" :key="item" :label="item" :value="item">
-                            </el-option>
-                        </el-select>
-                    </el-form-item>
-
-                    <el-form-item label-width="120px">
-                        <template #label>
-                            温度
-                            <el-tooltip class="item" effect="dark" content="温度用于控制生成的随机性，值越大回答越发散，越小则更确定。" placement="top">
-                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
-                            </el-tooltip>
-                        </template>
-                        <el-slider v-model="sendForm.temperature" style="width: 300px;" :step="5"
-                            :format-tooltip="formatTemperature" />
-                    </el-form-item>
                 </el-form>
 
-                <el-form inline>
+                <el-form inline  style="margin-top: -19px;">
                     <el-form-item>
-                        <el-button type="primary" @click="startSendResume" :loading="sendLoading" size="small">开始投递</el-button>
+                        <el-button type="primary" @click="startSendResume" :loading="sendLoading"
+                            size="small">开始投递</el-button>
                     </el-form-item>
                     <el-form-item>
                         <el-button type="danger" @click="() => stopJob(4)" size="small">停止投递</el-button>
                     </el-form-item>
                 </el-form>
 
-                <el-progress :percentage="sendProgress" :status="sendStatus" />
+                <el-progress :percentage="sendProgress" :status="sendStatus" style="margin-top: -19px;"/>
                 <br>
 
                 <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
-                :totalNumber="totalNumber" :maxHeight="700" @update:currentPage="currentPage = $event"
-                @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableSend"
-                :deleteAll="false" :selectedJobIds="selectedFilteredJobIds" :noButton="true"
-                @selection-change="handleJobSelectionChange" @send="startSendResume"/>
+                    :totalNumber="totalNumber" :maxHeight="700" @update:currentPage="currentPage = $event"
+                    @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableSend"
+                    :deleteAll="false" :selectedJobIds="selectedFilteredJobIds" :noButton="true"
+                    @selection-change="handleJobSelectionChange" @send="startSendResume" :heightRatio="0.5"/>
 
             </el-tab-pane>
         </el-tabs>
@@ -331,6 +348,9 @@ import { getFiltersMD5 } from '@/utils/encrypt';
 import { getFilterJobAPI, startFilterAPI, startRankAPI, sendResumeAPI } from '@/api/job';
 import axios from 'axios';
 
+const STORAGE_KEY = 'greetings-history';
+const MAX_HISTORY_LENGTH = 10;
+
 export default {
     name: "sendResume",
     components: { SearchFilter, JobTable },
@@ -339,8 +359,10 @@ export default {
             activeTab: 'resume',
             resumeList: [],
             jobList: [],
+            greetingsHistory: [],
             toBeFilteredJobList: [],
             selectedFilteredJobIds: [],
+            filterDrawerVisible: false,
             filterProgress: 0,
             filterLoading: false,
             filterStatus: null,
@@ -400,6 +422,18 @@ export default {
         'rankForm.minScore'() {
             // 滑块变化时，重新执行自动勾选逻辑
             this.selectLowScore();
+        },
+        'sendForm.message'(newVal) {
+            if (
+                newVal &&
+                !this.greetingsHistory.includes(newVal)
+            ) {
+                this.greetingsHistory.unshift(newVal); // 新的加到最前面
+                if (this.greetingsHistory.length > MAX_HISTORY_LENGTH) {
+                    this.greetingsHistory.pop(); // 移除最旧的
+                }
+                this.saveHistory();
+            }
         }
     },
     methods: {
@@ -893,11 +927,25 @@ export default {
                         console.error("发送简历出错", err);
                     }
                 });
+        },
+        removeGreeting(index) {
+            this.greetingsHistory.splice(index, 1);
+            this.saveHistory();
+        },
+        saveHistory() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.greetingsHistory));
+        },
+        loadHistory() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                this.greetingsHistory = JSON.parse(saved);
+            }
         }
     },
 
     mounted() {
         this.getResumeList();
+        this.loadHistory();
     },
     beforeDestroy() {
         if (this.timer) {
@@ -907,3 +955,11 @@ export default {
 }
 
 </script>
+
+<style scoped>
+.demo-form-inline ::v-deep(.el-form-item) {
+    margin-bottom: 3px;
+    /* 默认是 18px 左右，改小一点 */
+}
+</style>
+  

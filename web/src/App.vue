@@ -3,17 +3,18 @@
         <el-container style="min-height: 100vh;">
             <!-- 侧边栏区域 -->
             <el-aside width="auto" style="min-height: 100vh;">
-                <sidebar ref="sidebarRef" :is-collapse="isCollapse" @toggle-collapse="toggleCollapse" />
+                <sidebar ref="sidebarRef" :is-collapse="isCollapse" @toggle-collapse="toggleCollapse" @menu-click="updateTitle"/>
             </el-aside>
 
             <!-- 主内容区域 -->
             <el-container>
                 <!-- 顶部导航栏 -->
                 <el-header height="50px">
-                    <div class="header-content">
+                    <div class="header-content" style="display: flex; align-items: center; justify-content: space-between;">
                         <!-- 侧边栏折叠按钮 -->
                         <el-button type="text" icon="el-icon-s-fold" @click="toggleCollapse"
                             style="font-size: 18px;"></el-button>
+                        <span style="margin-left: 20px; font-size: 22px; font-weight: bold;">{{ currentTitle }}</span>
                         <!-- 顶部右侧个人中心 -->
                         <div class="right-menu">
                             <el-dropdown @command="handleCommand" :disabled="!$store.state.user.userInfo.userName">
@@ -80,6 +81,7 @@ export default {
     data() {
         return {
             isCollapse: false,
+            currentTitle: '',
             dialogVisible: false,
             userInfo: {
                 userId: this.$store.state.user.userInfo.id,
@@ -92,6 +94,9 @@ export default {
     methods: {
         toggleCollapse() {
             this.isCollapse = !this.isCollapse
+        },
+        updateTitle(title) {
+            this.currentTitle = title;
         },
         handleCommand(command) {
             console.log(command)

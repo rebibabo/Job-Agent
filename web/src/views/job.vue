@@ -15,6 +15,7 @@
             @update:pageSize="pageSize = $event"
             @pagination-change="fetchJobListAndRestore"
             ref="jobTableRef"
+            :heightRatio="0.66"
         />
 
     </div>

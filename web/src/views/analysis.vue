@@ -4,7 +4,7 @@
         <JobFilter v-model="filters" @submit="onSubmit" @reset="onReset" />
         <br>
 
-        <el-tabs type="border-card" style="height: 560px;">
+        <el-tabs type="border-card" style="height: 593px;">
             <el-tab-pane label="岗位薪资分析">
                 <div style="display: flex; justify-content: center;">
                     <JobChart title="岗位薪资分析" :data="titleData" xField="title" :yFields="yFields" :sortFields="sortFields" />
