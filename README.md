@@ -42,7 +42,8 @@
 
 **技术架构**
 
-![image-20250709205022741](image/image-20250709205022741.png)
+
+![image-20250709205022741](https://github.com/user-attachments/assets/5363aff2-bf19-42e4-aa97-255a0058fb93)
 
 
 
@@ -101,23 +102,28 @@ JobAgent/                        # 项目根目录
 
 主界面
 
-![image-20250709172153713](image/image-20250709172153713.png)
+![image-20250709172153713](https://github.com/user-attachments/assets/0eda5940-0be2-48d9-bc10-5862062a21b9)
+
 
 爬取岗位信息界面
 
-![image-20250709173312893](image/image-20250709173312893.png)
+![image-20250709173312893](https://github.com/user-attachments/assets/6ee6ba85-a228-4b73-b796-bbe816a2a9c8)
+
 
 职位查询界面
 
-![image-20250709173441829](image/image-20250709173441829.png)
+![image-20250709173441829](https://github.com/user-attachments/assets/ce5f5997-614f-469d-b71e-e385d4807fe7)
+
 
 岗位薪资分析界面
 
-![image-20250709173529019](image/image-20250709173529019.png)
+![image-20250709173529019](https://github.com/user-attachments/assets/7eb553ba-dc1e-4b1d-9c50-7cb759b52098)
+
 
 智能岗位匹配度打分界面
 
-![image-20250709173826313](image/image-20250709173826313.png)
+![image-20250709173826313](https://github.com/user-attachments/assets/4d735c62-a84b-463f-b7e4-040f7e1b6258)
+
 
 
 
