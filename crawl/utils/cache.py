@@ -5,6 +5,7 @@ from loguru import logger
 import datetime
 
 class CachedIterator:
+    # 将多个数组组合的遍历索引缓存起来，避免重复遍历，用于爬虫意外断开后恢复遍历
     def __init__(self, arrays, cache_path=None):
         """
         :param arrays: 输入的数组列表，例如 [a, b, c]。
@@ -78,6 +79,7 @@ class CachedIterator:
             raise StopIteration    
         
     def clear(self):
+        # 将索引恢复至开始状态
         self.index = 0
         self.array_indices = [
             {"index": 0, "value": arr[0]} if arr else {"index": 0, "value": None}

@@ -8,9 +8,9 @@ from loguru import logger
 class GPTFilter:
     def __init__(self, jobinfo: List[JobInfo], query: str, max_retries: int=3):
         self.jobinfo = jobinfo
-        self.jobs = [(i, job) for i, job in enumerate(jobinfo)]
+        self.jobs = [(i, job) for i, job in enumerate(jobinfo)]     # 给岗位编号，方便后续筛选
         self.query = query
-        self.max_retries = max_retries
+        self.max_retries = max_retries  # 设置最大重试次数，LLM返回的格式不一定正确
         
     def batch_filter(
         self,
@@ -25,6 +25,8 @@ class GPTFilter:
             {"role": "user", "content": f"我将提供给你{num}个招聘岗位信息，每一个岗位通过数字和[]标识，例如[1]。"},
             {"role": "assistant", "content": "好的，请提供各个岗位信息。"},
         ]
+        
+        # 添加岗位信息到上下文中
         for i, jobinfo in batch_job:
             job_text = (f"工作名称：{jobinfo.jobName}\n公司名称：{jobinfo.companyName}\n工作城市：{jobinfo.city}\n薪资范围：{jobinfo.salary}\n"
                     f"经验要求：{jobinfo.experience}\n学历要求：{jobinfo.degree}\n工作技能需求：{jobinfo.skills}\n行业：{jobinfo.industry}\n"
@@ -39,7 +41,7 @@ class GPTFilter:
         for _ in range(self.max_retries):
             response = get_response(LLM, messages, model, temperature)
             try:
-                return eval(response)
+                return eval(response)       # 模型返回结果是岗位id列表，例如[0, 3, 5]，需要将其转换为python列表
             except:
                 logger.warning(f"Wrong response format: {response}, retry...")
         logger.warning(f"第{i+1}批次过滤失败，重试{self.max_retries}次")
@@ -50,38 +52,46 @@ class GPTFilter:
         model: str = DEFAULT_MODEL, 
         temperature: float = 0.5,
         status=None,
-        repeat=3,
-        threshold=2,
+        repeat=1,       # 重复问答的次数，取多次结果提高准确率
+        threshold=1,    # 过滤的阈值，当重复问答的结果中，某个岗位的出现次数超过阈值，则认为该岗位符合查询条件，应当被过滤
         api_key: str = None,
         base_url: str = None,
     ) -> List[JobInfo]:
-        ans = []
-        LLM = get_llm(api_key=api_key, base_url=base_url)
-        for startIdx in trange(0, len(self.jobs), batch_size):
-            selected_indices = None
-            j = 0
-            repeat_filter = []
-            while j < repeat:
-                if status and status["running"] == 0:
-                    logger.info("停止过滤")
-                    return ans
-                batch_job = self.jobs[startIdx:startIdx+batch_size]
-                selected_indices = self.batch_filter(LLM, batch_job, model=model, temperature=temperature)
-                repeat_filter.extend(selected_indices)
-                j += 1
-            filter_freq = {}
-            for idx in repeat_filter:
-                filter_freq[idx] = filter_freq.get(idx, 0) + 1
-            selected_job = [self.jobinfo[idx] for idx, freq in filter_freq.items() if freq >= threshold]
-            ans.extend(selected_job)
+        try:
+            ans = []
+            LLM = get_llm(api_key=api_key, base_url=base_url)
+            for startIdx in trange(0, len(self.jobs), batch_size):
+                selected_indices = None
+                j = 0
+                repeat_filter = []
+                while j < repeat:
+                    if status and status["running"] == 0:
+                        logger.info("停止过滤")
+                        return ans
+                    batch_job = self.jobs[startIdx:startIdx+batch_size]
+                    selected_indices = self.batch_filter(LLM, batch_job, model=model, temperature=temperature)
+                    repeat_filter.extend(selected_indices)
+                    j += 1
+                filter_freq = {}
+                # 获取岗位id的出现次数
+                for idx in repeat_filter:
+                    filter_freq[idx] = filter_freq.get(idx, 0) + 1
+                selected_job = [self.jobinfo[idx] for idx, freq in filter_freq.items() if freq >= threshold]        # 选择出现次数超过阈值的岗位
+                ans.extend(selected_job)
+                if status:
+                    status["percentage"] = (startIdx + batch_size) / len(self.jobs) * 100
+                    status["results"].extend([job.to_dict() for job in selected_job])       # 将岗位信息转换为json并添加到状态中
             if status:
-                status["percentage"] = (startIdx + batch_size) / len(self.jobs) * 100
-                status["results"].extend([job.to_dict() for job in selected_job])
-        if status:
-            status["percentage"] = 100
+                status["percentage"] = 100
+                status["running"] = 0
+            jobs = [job.to_dict() for job in ans]
+            jobIds = [job["id"] for job in jobs]
+            logger.info(f"被过滤的岗位：{jobIds}")
+            logger.info(f"被过滤的岗位数量：{len(jobIds)}")
+            return ans
+        except Exception as e:
+            logger.error(f"过滤失败：{e}")
             status["running"] = 0
-        jobs = [job.to_dict() for job in ans]
-        jobIds = [job["id"] for job in jobs]
-        logger.info(f"被过滤的岗位：{jobIds}")
-        logger.info(f"被过滤的岗位数量：{len(jobIds)}")
-        return ans
+            status["percentage"] = -1
+            status["error"] = str(e)
+            return []

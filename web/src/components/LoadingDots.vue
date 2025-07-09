@@ -1,87 +1,71 @@
 <template>
-    <div v-if="visible" :style="containerStyle">
-        {{ message }}{{ dots }}
+    <div v-if="visible" class="loading-container">
+      <div class="loading-content">
+        <span class="loading-text">{{ message }}</span>
+        <span class="dot" v-for="i in 3" :key="i" :style="{ animationDelay: `${i * 0.2}s` }">.</span>
+      </div>
     </div>
-</template>
+  </template>
   
-<script>
-export default {
+  <script>
+  export default {
     name: 'LoadingDots',
     props: {
-        message: {
-            type: String,
-            default: '加载中，请稍候'
-        },
-        visible: {
-            type: Boolean,
-            default: true
-        },
-        interval: {
-            type: Number,
-            default: 500
-        }
-    },
-    data() {
-        return {
-            dots: '',
-            timer: null
-        }
-    },
-    computed: {
-        containerStyle() {
-            return {
-                position: 'fixed',
-                left: '57%',
-                top: "430px",
-                transform: 'translate(-50%, -50%)',
-                background: 'transparent',
-                color: '#67c23a',
-                padding: '16px 24px',
-                fontWeight: 'bold',
-                zIndex: 9999,
-                minWidth: '200px',
-                textAlign: 'center',
-                fontSize: '16px'
-            };
-        }
-    },
-    methods: {
-        start() {
-            this.dots = '';
-            if (this.timer) clearInterval(this.timer);
-            this.timer = setInterval(() => {
-                if (this.dots.length >= 3) {
-                    this.dots = '';
-                } else {
-                    this.dots += '.';
-                }
-            }, this.interval);
-        },
-        stop() {
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
-            this.dots = '';
-        }
-    },
-    watch: {
-        visible(newVal) {
-            if (newVal) {
-                this.start();
-            } else {
-                this.stop();
-            }
-        }
-    },
-    mounted() {
-        if (this.visible) {
-            this.start();
-        }
-    },
-    beforeDestroy() {
-        this.stop();
+      message: {
+        type: String,
+        default: '加载中，请稍候'
+      },
+      visible: {
+        type: Boolean,
+        default: true
+      }
     }
-}
-</script>
+  }
+  </script>
+  
+  <style scoped>
+  .loading-container {
+    position: fixed; /* 固定定位*/
+    top: 32px;
+    left: 600px;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none; /* 不影响鼠标事件 */
+  }
+  
+  .loading-content {
+    font-size: 16px;
+    color: #409EFF; /* Element Plus 主色 */
+    display: flex;
+    align-items: center;
+  }
+  
+  .loading-text {
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  
+  .dot {
+    font-weight: bold;
+    animation: bounce 1s infinite;
+    font-size: 18px;
+    color: #409EFF;
+    line-height: 1;
+  }
+  
+  /* 小跳动动画 */
+  @keyframes bounce {
+    0%, 80%, 100% {
+      transform: scale(1);
+      opacity: 0.3;
+    }
+    40% {
+      transform: scale(1.4);
+      opacity: 1;
+    }
+  }
+  </style>
   

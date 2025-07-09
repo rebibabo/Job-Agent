@@ -33,12 +33,11 @@
                     <!-- 右侧：简历列表 -->
                     <div style="flex: 1.5; min-width: 400px; margin-left: -90px;">
                         <div style="margin-bottom: 10px;">简历列表</div>
-                        <el-table :data="resumeList" border @selection-change="handleSelectionChange"
-                            ref="resumeTable">
+                        <el-table :data="resumeList" border @selection-change="handleSelectionChange" ref="resumeTable">
                             <el-table-column type="selection" width="40" />
                             <el-table-column prop="name" sortable label="简历名称" width="300" />
                             <el-table-column prop="datetime" sortable label="创建时间" width="160" />
-                            <el-table-column label="操作" min-width="120">
+                            <el-table-column label="操作" min-width="120"> 
                                 <template #default="{ row }">
                                     <el-button @click="handleView(row.name)" type="primary" size="mini"
                                         style="width: 56px;">查看</el-button>
@@ -89,7 +88,7 @@
                     </el-form-item>
                     <el-form-item>
                         <el-button type="primary" @click="() => startJob(true)" :loading="crawlLoading"
-                            size="small">开始任务</el-button>
+                            size="small">开始任务</el-button>  <!-- 开始爬虫任务，并且需要获取各个岗位的描述信息 -->
                     </el-form-item>
                     <el-form-item>
                         <el-button type="danger" @click="() => stopJob(1)" size="small">停止任务</el-button>
@@ -101,10 +100,11 @@
                 <br>
 
                 <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
-                    :totalNumber="totalNumber" :maxHeight="600" @update:currentPage="currentPage = $event" :heightRatio="0.5"
-                    @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableCrawl" />
+                    :totalNumber="totalNumber" :maxHeight="600" @update:currentPage="currentPage = $event"
+                    :heightRatio="0.5" @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore"
+                    ref="jobTableCrawl" />
 
-                <div v-if="timer === null && jobList.length !== 0"
+                <div v-if="stopFlag && jobList.length !== 0"
                     style="display: flex; justify-content: center; margin-top: 10px;">
                     <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
                 </div>
@@ -249,7 +249,7 @@
                     :totalNumber="totalNumber" :maxHeight="600" @update:currentPage="currentPage = $event"
                     @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableRank"
                     :deleteAll="false" :sentCVFrame="true" :selectedJobIds="selectedFilteredJobIds"
-                    @selection-change="handleJobSelectionChange" :rankScore="true" :heightRatio="0.44"/>
+                    @selection-change="handleJobSelectionChange" :rankScore="true" :heightRatio="0.44" />
 
                 <div style="display: flex; justify-content: center; margin-top: 10px;">
                     <el-button type="primary" @click="handleNext" style="margin-left: 40px;" size="small">下一步</el-button>
@@ -310,7 +310,7 @@
 
                 </el-form>
 
-                <el-form inline  style="margin-top: -19px;">
+                <el-form inline style="margin-top: -19px;">
                     <el-form-item>
                         <el-button type="primary" @click="startSendResume" :loading="sendLoading"
                             size="small">开始投递</el-button>
@@ -320,14 +320,14 @@
                     </el-form-item>
                 </el-form>
 
-                <el-progress :percentage="sendProgress" :status="sendStatus" style="margin-top: -19px;"/>
+                <el-progress :percentage="sendProgress" :status="sendStatus" style="margin-top: -19px;" />
                 <br>
 
                 <JobTable :jobList="jobList" :filters="filters" :currentPage="currentPage" :pageSize="pageSize"
                     :totalNumber="totalNumber" :maxHeight="700" @update:currentPage="currentPage = $event"
                     @update:pageSize="pageSize = $event" @pagination-change="fetchJobListAndRestore" ref="jobTableSend"
                     :deleteAll="false" :selectedJobIds="selectedFilteredJobIds" :noButton="true"
-                    @selection-change="handleJobSelectionChange" @send="startSendResume" :heightRatio="0.5"/>
+                    @selection-change="handleJobSelectionChange" @send="startSendResume" :heightRatio="0.5" />
 
             </el-tab-pane>
         </el-tabs>
@@ -349,19 +349,19 @@ import { getFilterJobAPI, startFilterAPI, startRankAPI, sendResumeAPI } from '@/
 import axios from 'axios';
 
 const STORAGE_KEY = 'greetings-history';
-const MAX_HISTORY_LENGTH = 10;
+const MAX_HISTORY_LENGTH = 10;  // 最多保存10条问候语
 
 export default {
     name: "sendResume",
     components: { SearchFilter, JobTable },
     data() {
         return {
-            activeTab: 'resume',
-            resumeList: [],
+            activeTab: 'resume',   // 当前激活的tab名称
+            resumeList: [],      // 简历列表
             jobList: [],
-            greetingsHistory: [],
-            toBeFilteredJobList: [],
-            selectedFilteredJobIds: [],
+            greetingsHistory: [],       // 问候语历史记录
+            toBeFilteredJobList: [],     // 待筛选的岗位列表
+            selectedFilteredJobIds: [], // 筛选后的岗位ID列表
             filterDrawerVisible: false,
             filterProgress: 0,
             filterLoading: false,
@@ -375,22 +375,22 @@ export default {
             sendProgress: 0,
             sendLoading: false,
             sendStatus: null,
-            timer: null,
+            stopFlag: false,        // 停止标志
             tableTimer: null,
             previewDialog: false,
             previewUrl: "",
             filters: {},
-            selectedResume: null,
-            startParsing: false,
-            finish: false,
-            currentPage: 1,
+            selectedResume: null,     // 选中的简历
+            startParsing: false,         // 开始解析标志
+            finish: false,            // 解析完成标志
+            currentPage: 1,          // 当前页码
             pageSize: 20,
             totalNumber: 0,
-            scoreMap: {}, // 保存跨页score
-            tabOrder: ['resume', 'crawl', 'filter', 'sort', 'deliver'],
+            scoreMap: {}, // 保存跨页岗位的score
+            tabOrder: ['resume', 'crawl', 'filter', 'sort', 'deliver'],     // 标签顺序
             models: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo', 'deepseek-r1'],
             filterForm: {
-                filterQuery: "",
+                filterQuery: "",         // 过滤规则描述
                 batchSize: 50,
                 model: 'gpt-4o-mini',
                 temperature: 25
@@ -402,20 +402,20 @@ export default {
                 temperature: 25
             },
             sendForm: {
-                message: "",
+                message: "",             // 问候语
                 polish: true,
                 model: 'gpt-4o-mini',
                 temperature: 25
             },
-            activities: [{
+            activities: [{                // 解析简历任务进度
                 content: '提取文本',
             }, {
                 content: '提取摘要',
             }, {
                 content: '生成图片',
             }],
-            activeIndex: 0,
-            stepIndex: 0
+            activeIndex: 0,             // 当前解析步骤索引
+            stepIndex: 0                // 当前整体步骤索引
         };
     },
     watch: {
@@ -438,13 +438,13 @@ export default {
     },
     methods: {
         ...searchMethods,
-        formatBatchSize(val) {
+        formatBatchSize(val) {      // batchsize范围：5-15
             return val / 10 + 5;
         },
-        formatTemperature(val) {
+        formatTemperature(val) {    // temperature范围：0-2
             return val / 50;
         },
-        formatScore(val) {
+        formatScore(val) {          // score范围：0-10
             return val / 10;
         },
         beforeUpload(file) {
@@ -460,7 +460,6 @@ export default {
                 this.$message.error('文件大小不能超过 4MB');
                 return false;
             }
-            // 构造 FormData
             const formData = new FormData();
             formData.append("file", file);
 
@@ -510,6 +509,7 @@ export default {
                 });
         },
         handleView(name) {
+            // 显示简历预览
             this.previewUrl = "";
             viewResumeAPI(name)
                 .then(res => {
@@ -521,6 +521,7 @@ export default {
                 })
         },
         handleSelectionChange(selection) {
+            // 只允许同时选中一个简历，选中后，解析步骤清零
             this.finish = false;
             this.startParsing = false;
             this.stepIndex = 0;
@@ -540,10 +541,12 @@ export default {
             }
         },
         handleThresholdChange() {
+            // 当匹配度分数阈值发生改变时，重新勾选所有低于阈值的岗位
             this.rankForm.minScore = this.threshold;
             this.fetchJobListAndRestore();
         },
         handleJobSelectionChange(selection) {
+            // 筛选后的岗位列表变化时，更新选中岗位列表
             const currentPageSelectedIds = selection.map(item => item.id);
             const currentPageAllIds = this.jobList.map(item => item.id);
             let newSelected = this.selectedFilteredJobIds.filter(id => !currentPageAllIds.includes(id));
@@ -551,9 +554,11 @@ export default {
             this.selectedFilteredJobIds = newSelected;
         },
         getCurrentIndex() {
+            // 获取当前tab的索引
             return this.tabOrder.indexOf(this.activeTab);
         },
         handleNext() {
+            // 点击下一步按钮，切换到下一个tab，并更新上方步骤进度
             const currentIndex = this.getCurrentIndex();
             console.log("当前索引", currentIndex)
             if (currentIndex >= 0 && currentIndex < this.tabOrder.length - 1) {
@@ -564,10 +569,7 @@ export default {
         startJob(getDesc = false) {
             // 清理可能残留的定时器
             this.crawlLoading = true;
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
+            this.stopFlag = false;
             if (this.tableTimer) {
                 clearInterval(this.tableTimer);
                 this.tableTimer = null;
@@ -602,11 +604,8 @@ export default {
                 });
         },
         stopJob(index) {
+            this.stopFlag = true;
             this.updateLoading(false, index);
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
             if (this.tableTimer) {
                 clearInterval(this.tableTimer);
                 this.tableTimer = null;
@@ -617,6 +616,7 @@ export default {
                 });
         },
         async handleParse() {
+            // 解析简历
             this.finish = false;
             try {
                 this.startParsing = true;
@@ -627,17 +627,17 @@ export default {
                     file: this.selectedResume.name,
                 };
 
-                // 第一步
+                // 第一步：提取文本
                 const res1 = await getResumeContentAPI(params);
                 this.activeIndex = 1;
-                this.$set(this.activities[res1.step - 1], "timestamp", res1.datetime);
+                this.$set(this.activities[res1.step - 1], "timestamp", res1.datetime);  // 获取上一次提取文本的时间戳
 
-                // 第二步
+                // 第二步：提取摘要
                 const res2 = await getResumeSummaryAPI(params);
                 this.activeIndex = 2;
                 this.$set(this.activities[res2.step - 1], "timestamp", res2.datetime);
 
-                // 第三步
+                // 第三步：生成图片
                 const res3 = await getResumePictureAPI(params);
                 this.activeIndex = 3;
                 this.$set(this.activities[res3.step - 1], "timestamp", res3.datetime);
@@ -650,15 +650,13 @@ export default {
             }
         },
         handleFilter() {
+            // 开始过滤岗位
+            this.stopFlag = false;
             if (this.filterForm.filterQuery.trim() === "") {
                 this.$message.warning("请输入过滤规则");
                 return;
             }
 
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
             this.filterLoading = true;
             this.filterStatus = null;
             var params = { userId: this.$store.state.user.userInfo.id, filterHash: getFiltersMD5(this.filters) };
@@ -679,9 +677,10 @@ export default {
                 }
                 console.log(params);
                 this.filterProgress = 0;
-                this.pollProgress(this.getCurrentIndex());
+
                 startFilterAPI(params).then(res => {
                     console.log("开始过滤", res);
+                    this.pollProgress(this.getCurrentIndex());
                 }).catch(err => {
                     if (err.status === 410) {
                         this.$message.warning('任务已启动，请勿重复启动');
@@ -697,10 +696,8 @@ export default {
 
         },
         handleRank() {
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
+            // 开始对岗位进行匹配度排序
+            this.stopFlag = false;
             if (this.selectedResume === null) {
                 this.$message.warning("请先选择简历");
                 return;
@@ -710,14 +707,17 @@ export default {
 
             this.selectedFilteredJobIds = []
 
+            // 先将所有选中状态清空
             this.jobList.forEach(job => {
                 this.$refs.jobTableRank.toggleRowSelection(job, false);
             });
             var params = { userId: this.$store.state.user.userInfo.id, filterHash: getFiltersMD5(this.filters) };
 
             getFilterJobAPI(params).then(res => {
-                this.filterProgress = 0;
+                this.rankProgress = 0;
                 this.pollProgress(this.getCurrentIndex());
+                // 清空分数
+                this.scoreMap = {};
 
                 const params = {
                     "userId": this.$store.state.user.userInfo.id,
@@ -743,6 +743,7 @@ export default {
             });
         },
         updateProgress(progress, index) {
+            // 更新进度
             if (index === 1) { // crawl
                 this.crawlProgress = progress
             }
@@ -757,6 +758,7 @@ export default {
             }
         },
         updateStatus(status, index) {
+            // 更新进度条状态
             if (index === 1) { // crawl
                 this.crawlStatus = status
             }
@@ -771,6 +773,7 @@ export default {
             }
         },
         updateLoading(loading, index) {
+            // 更新loading状态
             if (index === 1) { // crawl
                 this.crawlLoading = loading
             }
@@ -785,66 +788,86 @@ export default {
             }
         },
         pollProgress(index) {
-            // 定时向后端获取进度
-            this.timer = setInterval(() => {
+            const poll = () => {
+                // 如果stop，则停止轮循
+                if (this.stopFlag) {
+                    this.updateLoading(false, index);
+                    this.updateStatus('exception', index);
+                    return;
+                }
                 axios.get('/crawl/progress')
                     .then(response => {
+                        console.log(response.data);
                         this.updateProgress(response.data.percentage, index);
-                        this.toBeFilteredJobList = response.data.results
-                        console.log(response.data.results);
+                        this.toBeFilteredJobList = response.data.results;
+
                         if (response.data.percentage < 0) {
+                            // 后端发生了错误，显示错误信息
                             this.$message.error(response.data.error);
-                            clearInterval(this.timer);
-                            clearInterval(this.tableTimer);
+                            this.updateLoading(false, index);
+                            this.updateStatus('exception', index);
+                            return;
                         }
-                        else if (response.data.percentage >= 100) {
+
+                        if (response.data.percentage >= 100) {
+                            // 任务完成
                             this.updateStatus('success', index);
                             this.updateLoading(false, index);
-                            clearInterval(this.timer);
-                            clearInterval(this.tableTimer);
-                            if (this.getCurrentIndex() === 1)
+
+                            if (this.getCurrentIndex() === 1) {
+                                // 获取完整岗位列表
                                 this.fetchJobList();
-                        }
+                            }
+                            else if (this.getCurrentIndex() === 2) {
+                                // 获取完整的过滤结果
+                                this.selectedFilteredJobIds = response.data.results.map(item => item.id);
+                                // 更新子组件的选中id项
+                                this.$refs.jobTableFilter.selectedJobIds = this.selectedFilteredJobIds;
+                                this.fetchJobListAndRestore();
+                            }
 
-                        // 过滤 tab
-                        if (this.getCurrentIndex() === 2) {
-                            this.selectedFilteredJobIds = response.data.results.map(item => item.id)
-                            this.$refs.jobTableFilter.selectedJobIds = [...this.selectedFilteredJobIds]
-                            this.$nextTick(() => {
-                                this.toBeFilteredJobList.forEach(filteredJob => {
-
-                                    const matched = this.jobList.find(j => j.id === filteredJob.id);
-                                    if (matched) {
-                                        console.log("选中过滤", filteredJob.id);
-                                        this.$refs.jobTableFilter.toggleRowSelection(matched, true);
-                                    }
+                            else if (this.getCurrentIndex() === 3) {
+                                // 获取最后一次排序结果，并更新
+                                response.data.results.forEach(sortedJob => {
+                                    this.scoreMap[sortedJob.id] = sortedJob.score;
                                 });
-                            });
+
+                                this.$nextTick(() => {
+                                    this.fetchJobListAndRestore();
+                                });
+                            }
+
+                            return;
                         }
 
-                        // 匹配度排序 tab
+                        // tab == 3: 匹配度排序
                         if (this.getCurrentIndex() === 3) {
                             response.data.results.forEach(sortedJob => {
                                 this.scoreMap[sortedJob.id] = sortedJob.score;
                             });
+
                             this.$nextTick(() => {
                                 this.fetchJobListAndRestore();
-                                this.selectLowScore();
                             });
                         }
 
-                        // 投递简历tab
+                        // tab == 4: 投递简历
                         if (this.getCurrentIndex() === 4) {
+                            // 更新已投递状态信息
                             this.fetchJobList();
                         }
+
+                        // 下一轮
+                        setTimeout(poll, 1000);
                     })
                     .catch((err) => {
                         this.updateLoading(false, index);
                         this.$message.error(err.message || '获取进度失败');
                         this.updateStatus('exception', index);
-                        clearInterval(this.timer);
                     });
-            }, 1000); // 每1秒轮询一次
+            };
+
+            poll(); // 启动轮询
         },
         selectLowScore() {
             // 先取消所有勾选，再重新勾选符合条件的
@@ -857,7 +880,7 @@ export default {
                 const score = this.scoreMap[job.id];
                 if (
                     score != null &&
-                    score < this.formatScore(this.rankForm.minScore)
+                    score < this.formatScore(this.rankForm.minScore)  // 分数小于阈值，则勾选
                 ) {
                     this.$refs.jobTableRank.toggleRowSelection(job, true);
                     this.selectedFilteredJobIds.push(job.id);
@@ -865,30 +888,32 @@ export default {
             });
         },
         fetchJobListAndRestore() {
+            // 获取最新的岗位列表，并恢复上一次的选择状态
             this.fetchJobList().then(() => {
                 this.$nextTick(() => {
+                    if (this.getCurrentIndex() === 1) {
+                        this.$refs.jobTableCrawl.restoreSelection();
+                    }
                     if (this.getCurrentIndex() === 2) {
-                        this.$refs.jobTableFilter.restoreSelection(this.selectedFilteredJobIds);
+                        this.$refs.jobTableFilter.restoreSelection();
                     }
-                    if (this.getCurrentIndex() === 3) {
+                    else if (this.getCurrentIndex() === 3) {
                         this.$refs.jobTableRank.restoreSelection(this.selectedFilteredJobIds);
+                        // 恢复分数
+                        this.jobList.forEach(job => {
+                            if (this.scoreMap[job.id] != null) {
+                                this.$set(job, 'score', this.scoreMap[job.id]);
+                            }
+                        });
+                        this.selectLowScore();
                     }
-                    // 恢复分数
-                    this.jobList.forEach(job => {
-                        if (this.scoreMap[job.id] != null) {
-                            console.log(this.scoreMap);
-                            this.$set(job, 'score', this.scoreMap[job.id]);
-                        }
-                    });
 
                 })
             });
         },
         startSendResume() {
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
+            // 开始批量投递简历
+            this.stopFlag = false;
             if (this.sendForm.message === "") {
                 this.$message.warning("请先输入问候语");
                 return;
@@ -947,11 +972,6 @@ export default {
         this.getResumeList();
         this.loadHistory();
     },
-    beforeDestroy() {
-        if (this.timer) {
-            clearInterval(this.timer);
-        }
-    }
 }
 
 </script>

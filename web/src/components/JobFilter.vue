@@ -111,6 +111,7 @@ export default {
         }
     },
     methods: {
+        // 获取可选城市列表
         async fetchCityList() {
             try {
                 const res = await cityListAPI();
@@ -119,6 +120,7 @@ export default {
                 console.error('fetchCityList error:', error);
             }
         },
+        // 获取可选行业列表
         async fetchIndustryList() {
             try {
                 const res = await industryListAPI();
@@ -127,6 +129,7 @@ export default {
                 console.error('fetchIndustryList error:', error);
             }
         },
+        // 获取可选职位列表
         async fetchTitleList() {
             try {
                 const res = await titleListAPI();
@@ -136,19 +139,20 @@ export default {
             }
         },
         handleSelectChange(field, val) {
-            const last = val[val.length - 1];
-            if (val.length === 0) {
-                this.localFilters[field] = ['不限'];
-            } else if (this.localFilters[field].length === 2 && this.localFilters[field][0] === '不限') {
-                this.localFilters[field] = val.slice(1);
-            } else if (last === '不限') {
-                this.localFilters[field] = ['不限'];
-            } else {
+            const last = val[val.length - 1]; // 最后一个选项
+            if (val.length === 0) {     // 如果清空了所有选项
+                this.localFilters[field] = ['不限'];        // 将其设置为不限
+            } else if (this.localFilters[field].length === 2 && this.localFilters[field][0] === '不限') {       // 如果之前是不限，现在选择了其他选项
+                this.localFilters[field] = val.slice(1);    // 则只保留新选择的选项，取消不限选项
+            } else if (last === '不限') {       // 如果之前多选了选项，现在选择了不限选项
+                this.localFilters[field] = ['不限'];        // 则只保留不限选项
+            } else {         // 否则，新增多选的选项
                 this.localFilters[field] = val;
             }
-            this.$emit('change', { ...this.localFilters });
+            this.$emit('change', { ...this.localFilters });     // 触发父组件的 change 事件
         },
         resetForm() {
+            // 重置表单
             this.localFilters = {
                 city: ['不限'],
                 experience: ['不限'],
@@ -167,7 +171,7 @@ export default {
   
 <style scoped>
 .demo-form-inline ::v-deep(.el-form-item) {
-  margin-bottom: 6px; /* 默认是 18px 左右，改小一点 */
+  margin-bottom: 6px; /* 表单组件之间的行间距默认是 18px 左右，改小一点 */
 }
 </style>
   

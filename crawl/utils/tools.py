@@ -7,6 +7,7 @@ import yaml
 import os
 
 def get_param_hash(*args):
+    # 计算参数的MD5值
     m = hashlib.md5()
     s = json.dumps(args, ensure_ascii=False, sort_keys=True)
     m.update(s.encode('utf-8'))
@@ -48,6 +49,7 @@ def generate_random_id(length):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 def get_headers(user_id, reload=False):
+    # 获取请求Java后端的headers，需要先登录，获取到token并将其添加到headers中，才可以访问其他接口
     user_id = str(user_id)
     cache_path = os.path.join("cache", user_id, "headers.json")
     if os.path.exists(cache_path) and not reload:

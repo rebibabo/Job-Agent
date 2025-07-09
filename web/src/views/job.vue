@@ -73,17 +73,17 @@ export default {
         onSubmit() {
             this.currentPage = 1
             this.fetchJobListAndRestore()
-            this.$refs.jobTableRef.scrollUp()
+            this.$refs.jobTableRef.scrollUp()   // 回到表格顶部
         },
         onReset() {
             this.currentPage = 1
             this.fetchJobListAndRestore()
-            this.$refs.jobTableRef.scrollUp()
+            this.$refs.jobTableRef.scrollUp()   // 回到表格顶部
         },
         async fetchJobListAndRestore() {
             await this.fetchJobList();
             this.$nextTick(() => {
-                this.$refs.jobTableRef.restoreSelection();
+                this.$refs.jobTableRef.restoreSelection();  // 更新该页选中状态，支持跨页保存选中状态
             });
         }
     },

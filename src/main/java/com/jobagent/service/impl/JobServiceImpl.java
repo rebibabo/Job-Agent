@@ -90,15 +90,15 @@ public class JobServiceImpl implements JobService {
     public String insertJobs(InsertJobsDTO insertJobsDTO) {
         int total=0, insertNum=0, updateNum=0;
         for (JobInfo job : insertJobsDTO.getJobs()) {
-            Integer jobId = jobMapper.selectJobIdIfExists(job);
+            Integer jobId = jobMapper.selectJobIdIfExists(job);     // 查询指定city、companyId、jobName的岗位id
             total++;
             if (jobId == null) {
-                // 不存在，插入
+                // 岗位不存在，插入
                 jobMapper.insertJob(job);
                 insertNum++;
-                jobId = job.getJobId(); // 主键已回填
+                jobId = job.getJobId(); // 获取反向填充的自增主键jobId
             }
-            else if (job.getDescription() != null) {
+            else if (job.getDescription() != null) {    // 如果描述信息不存在，则需要增加description岗位描述
                 jobMapper.updateDescription(job);
                 updateNum++;
             }
@@ -106,10 +106,10 @@ public class JobServiceImpl implements JobService {
                 continue;
             }
 
-            // 先插入公司
+            // 如果companyId不存在，则新添加公司信息到company表
             jobMapper.insertCompanyIfNotExists(job);
             String filterHash = insertJobsDTO.getFilterHash();
-            // 插入用户与岗位关联
+            // 插入用户与岗位关联信息到user_job表中
             jobMapper.insertUserJobIfNotExists(insertJobsDTO.getUserId(), jobId, filterHash);
         }
         return "成功插入" + insertNum + "条数据，更新" + updateNum + "条岗位描述信息，共" + (total-insertNum) + "条重复数据";

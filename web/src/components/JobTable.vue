@@ -1,7 +1,8 @@
 <template>
     <div>
+        <!-- 岗位表格 -->
         <el-table :data="jobList" stripe border :height="height" style="width: 100%" ref="jobTable"
-            @selection-change="handleSelectionChange" :row-key="row => row.id">
+            @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="40"></el-table-column>
             <el-table-column prop="jobName" sortable label="工作名称" :width="jobNameWidth">
                 <template #default="{ row }">
@@ -62,6 +63,7 @@
             </el-table-column>
         </el-table>
 
+        <!-- 岗位下方按钮 -->
         <div style="display: flex; align-items: center; margin: 20px 0;">
             <el-button type="primary" @click="sendResume" :disabled="!selectedJobs.length" size="small"
                 v-if="!sentCVFrame && !noButton">
@@ -79,6 +81,7 @@
             </el-button>
         </div>
 
+        <!-- 岗位分页 -->
         <div
             :style="{ width: '80%', display: 'flex', justifyContent: 'center', marginTop: buttonTopMargin + 'px', marginLeft: '150px' }">
             <el-pagination @size-change="onSizeChange" @current-change="onCurrentChange" :current-page="currentPage"
@@ -86,6 +89,7 @@
                 :total="totalNumber" />
         </div>
 
+        <!-- 投递简历弹窗界面 -->
         <el-dialog title="投递简历" :visible.sync="sendResumeDialogVisible" :before-close="handleBeforeClose" width="65%">
             <el-table :data="resumeList" border style="width: 100%;" @selection-change="handleResumeSelectionChange"
                 ref="resumeTable">
@@ -144,15 +148,15 @@
                 </el-form-item>
 
                 <el-form-item>
-                        <template #label>
-                            润色
-                            <el-tooltip class="item" effect="dark" content="系统将根据各个岗位描述对问候语进行优化，提升Boss回复率。" placement="top">
-                                <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
-                            </el-tooltip>
-                        </template>
-                        <el-switch v-model="sendForm.polish" />
+                    <template #label>
+                        润色
+                        <el-tooltip class="item" effect="dark" content="系统将根据各个岗位描述对问候语进行优化，提升Boss回复率。" placement="top">
+                            <i class="el-icon-question" style="margin-left: 4px; cursor: pointer;" />
+                        </el-tooltip>
+                    </template>
+                    <el-switch v-model="sendForm.polish" />
 
-                    </el-form-item>
+                </el-form-item>
             </el-form>
 
             <el-form inline>
@@ -160,13 +164,14 @@
                     <el-button type="primary" @click="startSendResume" :loading="sendLoading" size="small">开始投递</el-button>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="danger" @click="() => stopJob(4)" size="small">停止投递</el-button>
+                    <el-button type="danger" @click="stopJob" size="small">停止投递</el-button>
                 </el-form-item>
             </el-form>
 
             <el-progress :percentage="sendProgress" :status="sendStatus" />
         </el-dialog>
 
+        <!-- 预览简历弹窗界面 -->
         <el-dialog title="预览简历" :visible.sync="previewDialog" width="60%" top="40px">
             <iframe v-if="previewUrl" :src="previewUrl" width="100%" height="600px" style="border:none"></iframe>
         </el-dialog>
@@ -182,48 +187,49 @@ import { sendResumeAPI } from '@/api/job'
 import axios from 'axios'
 
 const STORAGE_KEY = 'greetings-history';
-const MAX_HISTORY_LENGTH = 10;
+const MAX_HISTORY_LENGTH = 10;      // 问候语历史记录最大长度
 
 export default {
     name: 'JobTable',
     props: {
-        jobList: { type: Array, required: true },
-        filters: { type: Object, required: false },
-        currentPage: { type: Number, required: true },
-        pageSize: { type: Number, required: true },
-        totalNumber: { type: Number, required: true },
-        deleteAll: { type: Boolean, default: true },
-        sentCVFrame: { type: Boolean, default: false },
-        rankScore: { type: Boolean, default: false },
-        noButton: { type: Boolean, default: false },
-        heightRatio: { type: Number, default: 0.6 },
+        jobList: { type: Array, required: true },       // 岗位分页列表
+        filters: { type: Object, required: false },     // 过滤规则
+        currentPage: { type: Number, required: true },  // 当前页
+        pageSize: { type: Number, required: true },     // 每页条数
+        totalNumber: { type: Number, required: true },  // 总条数
+        deleteAll: { type: Boolean, default: true },    // 是否显示删除全部按钮
+        sentCVFrame: { type: Boolean, default: false }, // 是否在智能投递简历页面
+        rankScore: { type: Boolean, default: false },   // 是否新增分数列
+        noButton: { type: Boolean, default: false },    // 是否隐藏按钮
+        heightRatio: { type: Number, default: 0.6 },    // 表格高度占比
     },
     computed: {
-        jobNameWidth() {
+        jobNameWidth() {    // 用来调整表格宽度
             return 250 + (this.rankScore ? 0 : 70);
         },
-        buttonTopMargin() {
+        buttonTopMargin() { // 用来调整按钮距离表格下方的间距
             return this.noButton ? -25 : -50;
         }
     },
     emits: ['view', 'delete', 'send', 'update:currentPage', 'update:pageSize', 'pagination-change'],
     data() {
         return {
-            selectedJobs: [],
-            selectedJobIds: [], // 用于跨页记忆
-            resumeList: [],
-            greetingsHistory: [],
+            selectedJobs: [],   // 存放当前页选中的岗位信息
+            selectedJobIds: [], // 用于跨页记忆，存放选中的岗位id
+            resumeList: [],     // 简历列表
+            greetingsHistory: [],       // 问候语历史记录
             sendResumeDialogVisible: false,
+            stopFlag: false,
             sendProgress: 0,
             sendLoading: false,
             sendStatus: null,
             previewDialog: false,
             previewUrl: "",
-            selectedResume: null,
-            height: window.innerHeight * this.heightRatio,
-            timer: null,
+            selectedResume: null,   // 选中的简历
+            height: window.innerHeight * this.heightRatio,      // 表格高度
+            timer: null,        // 定时器，用来轮循投递简历进度
             models: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo', 'deepseek-r1'],
-            sendForm: {
+            sendForm: {     // 发送简历的表单信息
                 message: "",
                 polish: true,
                 model: 'gpt-4o-mini',
@@ -239,20 +245,41 @@ export default {
             return val / 50;
         },
         toggleRowSelection(row, selected) {
-            console.log("选择行", row, selected)
+            // 必须要外显这个函数，否则父组件无法选中表格内的行
             this.$refs.jobTable.toggleRowSelection(row, selected);
         },
         handleSelectionChange(selection) {
+            // 当前页原始选中的ID
+            const originalSelectedIds = this.selectedJobs.map(item => item.id);
+            // 当前页所有数据的ID
+            const currentPageIds = this.jobList.map(item => item.id);
+            // 更新当前页选中的岗位信息
             this.selectedJobs = selection
+            // 当前页目前选中的ID
+            const selectedIds = selection.map(item => item.id);
+            // 新增的选中项
+            const newId = selectedIds.filter(id => !originalSelectedIds.includes(id));
+            // 移除的选中项
+            const removeId = originalSelectedIds.filter(id => !selectedIds.includes(id));
+            // 合并新的选中项
             this.selectedJobIds = [
-                ...new Set([
-                    ...this.selectedJobIds,
-                    ...selection.map(item => item.id)
+               ...new Set([
+                   ...this.selectedJobIds,
+                   ...newId
                 ])
             ];
+            // console.log("当前页原始选中ID", originalSelectedIds)
+            // console.log("当前页所有数据ID", currentPageIds)
+            // console.log("当前页选中ID", selectedIds)
+            // console.log("新增选中项", newId)
+            // console.log("移除选中项", removeId)
+            // 从跨页选中的所有ID中删除当前页所有的反选的ID
+            this.selectedJobIds = this.selectedJobIds.filter(id => !removeId.includes(id) || !currentPageIds.includes(id));
             this.$emit('selection-change', selection)
+            // console.log("新的跨页选中ID", this.selectedJobIds)
         },
         scrollUp() {
+            // 当换页的时候，滚动条回到顶部
             nextTick(() => {
                 const wrapper = this.$refs.jobTable?.$el.querySelector('.el-table__body-wrapper')
                 if (wrapper) {
@@ -271,6 +298,7 @@ export default {
             this.$emit('pagination-change')
         },
         confirmDelete(ids) {
+            // 根据jobId删除选中的岗位
             this.$confirm('确认删除所选岗位？')
                 .then(() => {
                     deleteAPI({
@@ -290,6 +318,7 @@ export default {
                 })
         },
         confirmDeleteAll() {
+            // 删除所有页的岗位
             this.$confirm('确认删除全部岗位？')
                 .then(() => {
                     deleteALLAPI({ userId: this.$store.state.user.userInfo.id, filterHash: getFiltersMD5(this.filters) })
@@ -313,6 +342,7 @@ export default {
             this.confirmDelete(ids)
         },
         confirmaDeleteFilteredJob() {
+            // 删除所有页被选中的岗位，但只删除user_job中的元素，不删除job表中的数据
             this.$confirm('确认删除全部岗位？')
                 .then(() => {
                     console.log(this.selectedJobIds.length)
@@ -375,34 +405,41 @@ export default {
         },
 
         pollProgress() {
-            // 定时向后端获取进度
-            this.timer = setInterval(() => {
+            // 采用递归的方式轮循1s中获取后端进度
+            const poll = () => {
+                if (this.stopFlag) {
+                    this.stopFlag = false;
+                    return;
+                }
                 axios.get('/crawl/progress')
                     .then(response => {
                         this.sendProgress = response.data.percentage;
+
                         if (this.sendProgress < 0) {
                             this.$message.error(response.data.error);
-                            clearInterval(this.timer);
+                            this.sendStatus = 'exception';
+                            return;
                         }
-                        else if (this.sendProgress >= 100) {
+
+                        if (this.sendProgress >= 100) {
                             this.sendLoading = false;
                             this.sendStatus = 'success';
-                            clearInterval(this.timer);
-                            this.$emit('pagination-change')
+                            this.$emit('pagination-change');
+                            return;
                         }
+
+                        // 继续下一轮轮询
+                        setTimeout(poll, 1000);
                     })
                     .catch((err) => {
                         this.$message.error(err.message || '获取进度失败');
                         this.sendStatus = 'exception';
-                        clearInterval(this.timer);
                     });
-            }, 1000); // 每1秒轮询一次
+            };
+
+            poll(); // 启动轮询
         },
         startSendResume() {
-            if (this.timer) {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
             if (this.sendForm.message === "") {
                 this.$message.warning("请先输入问候语");
                 return;
@@ -442,6 +479,18 @@ export default {
                     }
                 });
         },
+        stopJob() {
+            this.stopFlag = true;
+            this.sendLoading = false;
+            if (this.tableTimer) {
+                clearInterval(this.tableTimer);
+                this.tableTimer = null;
+            }
+            axios.get('/crawl/stop')
+                .then(() => {
+                    this.sendStatus = 'exception';
+                });
+        },
         handleBeforeClose(done) {
             if (this.timer) {
                 clearInterval(this.timer);
@@ -461,15 +510,17 @@ export default {
         },
         restoreSelection(filteredJobIds = []) {
             this.$nextTick(() => {
+                // 如果参数为空，则根据this.selectedJobIds恢复选中状态
                 if (filteredJobIds.length === 0) {
                     this.jobList.forEach(row => {
-                        this.$refs.jobTable.toggleRowSelection(
-                            row,
-                            this.selectedJobIds.includes(row.id)
-                        );
+                        if (this.selectedJobIds.includes(row.id)) {
+                            this.$refs.jobTable.toggleRowSelection(row, true);
+                        }
                     });
                 }
+                // 否则，根据传入参数恢复选中状态
                 else {
+                    this.selectedJobIds = filteredJobIds;
                     this.jobList.forEach(row => {
                         if (filteredJobIds.includes(row.id)) {
                             this.$refs.jobTable.toggleRowSelection(row, true);
@@ -479,6 +530,7 @@ export default {
             });
         },
         handleResumeSelectionChange(selection) {
+            // 只选择一个简历
             if (selection.length > 1) {
                 const lastRow = selection[selection.length - 1];
 
@@ -493,6 +545,7 @@ export default {
             }
         },
         async fetchJobListAndRestore() {
+            // 获取JobList的同时，从selectedJobIds中恢复选中状态
             await this.fetchJobList();
             this.$nextTick(() => {
                 this.$refs.jobTableRef.restoreSelection();
@@ -522,7 +575,7 @@ export default {
                 console.error(err);
             });
         window.addEventListener('resize', this.updateTableHeight);
-        this.loadHistory();
+        this.loadHistory();     // 加载问候语历史记录
     },
     watch: {
         'sendForm.message'(newVal) {

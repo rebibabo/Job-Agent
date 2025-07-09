@@ -4,36 +4,36 @@
         <JobFilter v-model="filters" @submit="onSubmit" @reset="onReset" />
         <br>
 
-        <el-tabs type="border-card" style="height: 593px;">
+        <el-tabs type="border-card" style="height: 593px;" @tab-click="handleTabClick" >
             <el-tab-pane label="岗位薪资分析">
                 <div style="display: flex; justify-content: center;">
-                    <JobChart title="岗位薪资分析" :data="titleData" xField="title" :yFields="yFields" :sortFields="sortFields" />
+                    <JobChart :key="`chart1_${chartTrigger}`" title="岗位薪资分析" :data="titleData" xField="title" :yFields="yFields" :sortFields="sortFields" />
                 </div>
             </el-tab-pane>
 
             <el-tab-pane label="城市薪资分析">
                 <div style="display: flex; justify-content: center;">
-                    <JobChart title="城市薪资分析" :data="cityData" xField="city" :yFields="yFields" :sortFields="sortFields" />
+                    <JobChart :key="`chart2_${chartTrigger}`" title="城市薪资分析" :data="cityData" xField="city" :yFields="yFields" :sortFields="sortFields" />
                 </div>
             </el-tab-pane>
 
             <el-tab-pane label="学历薪资分析">
                 <div style="display: flex; justify-content: center;">
-                    <JobChart title="学历薪资分析" :data="degreeData" xField="degree" :yFields="yFields"
+                    <JobChart :key="`chart3_${chartTrigger}`" title="学历薪资分析" :data="degreeData" xField="degree" :yFields="yFields"
                         :sortFields="sortFields" />
                 </div>
             </el-tab-pane>
 
             <el-tab-pane label="工作经验薪资分析">
                 <div style="display: flex; justify-content: center;">
-                    <JobChart title="工作经验薪资分析" :data="experienceData" xField="experience" :yFields="yFields"
+                    <JobChart :key="`chart4_${chartTrigger}`" title="工作经验薪资分析" :data="experienceData" xField="experience" :yFields="yFields"
                         :sortFields="sortFields" />
                 </div>
             </el-tab-pane>
 
             <el-tab-pane label="行业薪资分析">
                 <div style="display: flex; justify-content: center;">
-                    <JobChart title="行业薪资分析" :data="industryData" xField="industry" :yFields="yFields"
+                    <JobChart :key="`chart5_${chartTrigger}`" title="行业薪资分析" :data="industryData" xField="industry" :yFields="yFields"
                         :sortFields="sortFields" />
                 </div>
             </el-tab-pane>
@@ -76,16 +76,18 @@ export default {
     data() {
         return {
             loading: true,
-            generating: false,
-            cityData: [],
+            generating: false,  // 词云图生成时按钮的加载状态
+            activeTab: '1', // 默认激活第一个 Tab
+            chartTrigger: 0, // 用来强制刷新子组件，当vue组件的key发生变化时，会强制创建新组建，初始化ECharts动画
+            cityData: [],  // 存放不同城市的岗位数量、最低薪资平均值、最高薪资平均值
             industryData: [],
             degreeData: [],
             experienceData: [],
             titleData: [],
-            filters: {},
+            filters: {},        // 过滤规则
             titleList: [],
             selectedTitle: '',
-            wordCloudUrl: '',
+            wordCloudUrl: '',    // 存放岗位技能词云图的 URL
             yFields: [
                 { label: '最低薪资', value: 'salaryFloor', yAxisIndex: 0 },
                 { label: '最高薪资', value: 'salaryCeiling', yAxisIndex: 0 },
@@ -112,21 +114,25 @@ export default {
                 this.wordCloudUrl = '';
             }
         },
+        handleTabClick() {
+            // 每次切换 Tab，chartTrigger +1，JobChart 会重新渲染，动画重新播放
+            this.chartTrigger++;
+        },
         handleClose(done) {
             done();
             this.generating = false;
         },
-        formatOptions(options) {
-            if (!options || options.length === 0) return '';
-            if (options.length === 1 && options[0] === '不限') return '';
-            return options.filter(opt => opt !== '不限').join(',');
+        formatOptions(options) {  
+            if (!options || options.length === 0) return '';  // 空数组返回空字符串
+            if (options.length === 1 && options[0] === '不限') return '';  // 不限选项返回空字符串
+            return options.filter(opt => opt !== '不限').join(',');  // 去掉不限选项，用逗号分隔其他选项
         },
         reset() {
             this.cityData = [],
-                this.industryData = [],
-                this.degreeData = [],
-                this.experienceData = [],
-                this.titleData = []
+            this.industryData = [],
+            this.degreeData = [],
+            this.experienceData = [],
+            this.titleData = []
         },
         async fetchTitleList() {
             try {

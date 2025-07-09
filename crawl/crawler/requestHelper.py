@@ -5,12 +5,14 @@ from loguru import logger
 import json
 
 def list_all_cookies(cache_dir):
+    # 将缓存目录下的state.json读取为cookies字典
     with open(f"{cache_dir}/state.json", "r", encoding="utf-8") as f:
         data = json.load(f)
         cookies = data.get("cookies", [])
         return {cookie["name"]: cookie["value"] for cookie in cookies}
 
 def retry(max_retries=3):
+    # 重试装饰器
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -23,7 +25,7 @@ def retry(max_retries=3):
                         user_id = kwargs.get("user_id", args[0] if args else None)
                         if isinstance(data, dict) and data.get("code") != 0:
                             logger.warning(f"Error occurred: {response.text}. Retry {i+1}/{max_retries}...")
-                            Request.update_zp_token(user_id)
+                            Request.update_zp_token(user_id)        # 反爬系统会验证token是否有效，失效则更新token
                             continue
                     return response
                 except Exception as e:
@@ -36,6 +38,7 @@ def retry(max_retries=3):
     return decorator
     
 class Request:
+    # 封装了requests类，提供get、post方法，并添加了重试机制和token更新机制，来绕过反爬系统
     headers = {
         "accept": "application/json, text/plain, */*",
         "accept-language": "en-GB,en;q=0.9,zh-CN;q=0.8,zh;q=0.7,en-US;q=0.6",
@@ -54,11 +57,12 @@ class Request:
     cookies = None
 
     fetcher = None
-    max_retry = 5
+    max_retry = 5       # 如果用一个token发送5次请求，下一次请求就会被反爬系统拦截，此时需要更新token
     request_cnt = max_retry
 
     @classmethod
     def get_fetcher(cls, user_id):
+        # 懒加载TokenFetcher，用来获取反反爬必须的token
         if cls.fetcher is None:
             cls.fetcher = TokenFetcher(user_id)
         return cls.fetcher

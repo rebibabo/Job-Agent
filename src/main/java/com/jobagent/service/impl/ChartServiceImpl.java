@@ -20,7 +20,7 @@ public class ChartServiceImpl implements ChartService {
         List<Map<String, Object>> mapList = new ArrayList<>();
         for (SalaryVO vo : rawList) {
             Map<String, Object> map = new HashMap<>();
-            map.put(chartDTO.getDimensionName(), vo.getDimensionValue());
+            map.put(chartDTO.getDimensionName(), vo.getDimensionValue());       // chartDTO.dimensionName为待分析维度的名称，例如city，而vo.dimensionValue为维度具体的值，例如北京
             map.put("count", vo.getCount());
             map.put("salaryFloor", vo.getSalaryFloor());
             map.put("salaryCeiling", vo.getSalaryCeiling());
@@ -31,6 +31,7 @@ public class ChartServiceImpl implements ChartService {
 
     @Override
     public String getWordCloudPicture(String title) {
+        // 获取该岗位所有的skills列表，每一个skills由多个skills组成，由逗号分隔
         List<String> skillsList = chartMapper.getTitleSkills(title);
         List<String> skillList = new ArrayList();
         for (String skills : skillsList) {

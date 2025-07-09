@@ -14,7 +14,7 @@
                         <img src="@/assets/logo.png" alt="Login Image" class="login-image" style="width:100%;">
                     </div>
 
-                    <el-form-item prop="username">
+                    <el-form-item prop="username">   <!-- 点击回车跳转到密码输入框 -->
                         <el-input ref="username" v-model="loginForm.username" placeholder="用户名" prefix-icon="el-icon-user"
                             name="username" type="text" tabindex="1" auto-complete="on" @keyup.enter.native="onUsernameEnter"/>
                     </el-form-item>
@@ -23,7 +23,7 @@
                     <el-form-item prop="password">
                         <el-input :key="passwordType" ref="password" v-model="loginForm.password" :type="passwordType"
                             placeholder="密码" prefix-icon="el-icon-lock" name="password" tabindex="2" auto-complete="off"
-                            @keyup.enter.native="handleLogin">
+                            @keyup.enter.native="handleLogin">  <!-- 点击回车触发登录 -->
                             <template #suffix>
                                 <span class="show-pwd" @click.stop="showPwd">
                                     <i :class="passwordType === 'password' ? 'el-icon-view' : 'el-icon-refresh'"></i>

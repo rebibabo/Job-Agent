@@ -61,7 +61,7 @@
                     </template>
                 </el-dialog>
 
-                <!-- 页面主要内容 -->
+                <!-- 页面主要内容，路由视图为router/index.js -->
                 <el-main>
                     <router-view />
                 </el-main>
@@ -80,9 +80,9 @@ export default {
     components: { Sidebar },
     data() {
         return {
-            isCollapse: false,
-            currentTitle: '',
-            dialogVisible: false,
+            isCollapse: false,  // 侧边栏是否折叠
+            currentTitle: '',  // 用来更新当前页导航栏的标题
+            dialogVisible: false,   // 个人中心弹窗是否显示
             userInfo: {
                 userId: this.$store.state.user.userInfo.id,
                 userName: this.$store.state.user.userInfo.userName,
@@ -148,6 +148,7 @@ export default {
                 })
         },
         submitRule() {
+            // 更新密码，需要输入旧密码和新密码
             if (this.userInfo.newPassword === '') {
                 this.$message.error('新密码不能为空');
                 return;

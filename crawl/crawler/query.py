@@ -90,6 +90,7 @@ class JobQuery:
         self.industry = ','.join(industries)
 
     def to_params(self, page):
+        # 将JobQuery对象转换为请求参数
         params = {
             "page": page,
             "pageSize": "30",       # 最大是30
@@ -106,6 +107,7 @@ class JobQuery:
         return params
 
     def to_url(self):
+        # 将JobQuery对象转换为搜索的url
         base_url = "https://www.zhipin.com/web/geek/job?"
         params = '&'.join([f'{k}={v}' for k, v in self.to_dict().items() if v])
         return base_url + params

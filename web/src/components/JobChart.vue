@@ -66,6 +66,7 @@ export default {
             });
         },
         calculateWidth() {
+            // 自适应表格的宽度，每一个元素占150px像素，最多是最大宽度1150px，最小宽度400px
             if (this.data && this.data.length > 0) {
                 const baseWidth = this.data.length * 150;
                 const maxWidth = 1150;
@@ -104,7 +105,7 @@ export default {
                     data: xAxisData, 
                     axisLabel: { interval: 0, rotate: 45 } 
                 },
-                yAxis: [
+                yAxis: [    // 左边y轴为薪资
                     {
                         type: 'value',
                         name: '薪资 (年)',
@@ -117,8 +118,8 @@ export default {
                 ],
                 series: series,
                 animation: true, // 确保图表整体动画开启
-                animationDuration: 1000,
-                animationEasing: 'elasticOut'
+                animationDuration: 2000,
+                animationEasing: 'bounceIn'
             };
 
             // 如果是首次渲染，直接设置option

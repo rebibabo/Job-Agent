@@ -7,7 +7,7 @@ const service = axios.create({
     timeout: 60000,
 });
 
-// 请求拦截器
+// 请求拦截器，为所有以/api开头的请求添加token
 service.interceptors.request.use(
     (config) => {
         // 只处理/api开头的请求
@@ -32,7 +32,7 @@ service.interceptors.response.use(
     (response) => response.data,
     (error) => {
         if (error.response) {
-            if (error.response.status === 401) {
+            if (error.response.status === 401) {  // 401: token失效
                 if (!isRedirecting) {
                     isRedirecting = true;
                     alert("登录已过期，请重新登录");

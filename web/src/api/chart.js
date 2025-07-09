@@ -1,6 +1,5 @@
 import request from '@/utils/request'
 
-
 export const chartAPI = (params) => {
     return request.post('/api/chart/', params)
 }

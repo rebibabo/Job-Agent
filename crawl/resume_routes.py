@@ -5,11 +5,13 @@ import json
 import shutil
 import datetime
 
+# 简历相关的路由
 resume_bp = Blueprint("resume", __name__, url_prefix="/resume")
 
 
 @resume_bp.route('/<user_id>', methods=['POST'])
 def upload_resume(user_id):
+    # 上传简历
     if 'file' not in request.files:
         return jsonify({"message": "没有文件上传"}), 400
 
@@ -21,6 +23,7 @@ def upload_resume(user_id):
         return jsonify({"message": "只允许PDF格式文件"}), 400
 
     pdf_name = os.path.splitext(file.filename)[0]
+    # 保存到指定用户目录下的缓存路径下
     save_dir = os.path.join("cache", user_id, "resume", pdf_name)
     if os.path.exists(save_dir):
         return jsonify({"message": "简历已存在"}), 400
@@ -29,6 +32,7 @@ def upload_resume(user_id):
     save_path = os.path.join(save_dir, file.filename)
     file.save(save_path)
 
+    # 保存简历创建的时间信息
     with open(os.path.join(save_dir, "datetime.json"), "w") as f:
         js = {"create": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         json.dump(js, f, indent=4)
@@ -38,6 +42,7 @@ def upload_resume(user_id):
 
 @resume_bp.route('/<user_id>', methods=['GET'])
 def get_resume_list(user_id):
+    # 获取该用户所有上传的简历列表，返回简历名称和创建时间
     save_dir = os.path.join("cache", user_id, "resume")
     if not os.path.exists(save_dir):
         return jsonify({"message": "简历不存在"}), 404
@@ -58,6 +63,7 @@ def get_resume_list(user_id):
 
 @resume_bp.route('/view', methods=['POST'])
 def view_resume():
+    # 预览简历，返回预览的url链接
     data = request.get_json()
     user_id = str(data.get('userId'))
     if not user_id: 
@@ -72,6 +78,7 @@ def view_resume():
 
 @resume_bp.route('/delete', methods=['POST'])
 def delete_resume():
+    # 根据简历名称，删除该用户的简历
     data = request.get_json()
     user_id = data.get('userId')
     file_name = data.get('file', '')
@@ -88,11 +95,13 @@ def delete_resume():
 
 @resume_bp.route('/<user_id>/<file_name>.pdf')
 def preview_resume(user_id, file_name):
+    # 预览简历，返回pdf的二进制数据
     file_dir = os.path.join("cache", user_id, "resume", file_name)
     return send_from_directory(file_dir, file_name + ".pdf")
 
 
 def get_datetime(file_dir, key):
+    # 获取简历的指定key的时间，包括create、content、summary、picture
     with open(os.path.join(file_dir, "datetime.json"), "r") as f:
         js = json.load(f)
         return js.get(key, "")
@@ -100,6 +109,7 @@ def get_datetime(file_dir, key):
 
 @resume_bp.route('/parse/content', methods=['GET'])
 def parse_resume_content():
+    # 解析简历的content，返回解析结果和解析时间
     user_id = request.args.get('userId')
     file_name = request.args.get('file')
     if not user_id or not file_name:
@@ -117,6 +127,7 @@ def parse_resume_content():
 
 @resume_bp.route('/parse/summary', methods=['GET'])
 def parse_resume_summary():
+    # 解析简历的summary，返回解析结果和解析时间
     user_id = request.args.get('userId')
     file_name = request.args.get('file')
     if not user_id or not file_name:
@@ -134,6 +145,7 @@ def parse_resume_summary():
 
 @resume_bp.route('/parse/picture', methods=['GET'])
 def parse_resume_picture():
+    # 解析简历的picture，返回解析结果和解析时间
     user_id = request.args.get('userId')
     file_name = request.args.get('file')
     if not user_id or not file_name:

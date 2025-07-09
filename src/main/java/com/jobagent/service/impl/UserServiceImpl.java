@@ -46,7 +46,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Boolean changePassword(UserPasswordDTO userPasswordDTO) {
         Integer count = userMapper.getUserInfo(userPasswordDTO);
-        if (count == 1) {
+        if (count == 1) { // 用户名和密码验证成功
             userMapper.changePassword(userPasswordDTO);
             return true;
         }
@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Boolean addUser(UserAddDTO userAddDTO) {
         Integer count = userMapper.getByName(userAddDTO.getUsername());
-        if (count >= 1) {
+        if (count >= 1) {   // 存在重复的用户名
             return false;
         }
         userMapper.addUser(userAddDTO);
@@ -67,8 +67,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void deleteUser(Integer userId) {
-        userMapper.deleteUser(userId);
-        userMapper.deleteJobByUserId(userId);
-        userMapper.deleteJobByUserId(userId);
+        userMapper.deleteUser(userId);      // 删除user表数据
+        userMapper.deleteJobByUserId(userId);   // 根据userId删除job表中的数据
+        userMapper.deleteUserJobByUserId(userId);   // 根据userId删除user_job表中的数据
     }
 }

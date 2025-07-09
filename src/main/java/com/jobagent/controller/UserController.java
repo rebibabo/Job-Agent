@@ -43,11 +43,12 @@ public class UserController {
         }
 
         Map<String, Object> claims = new HashMap<>();
+        // 将userId放到claims中，用来生成token
         claims.put(JwtClaimsConstant.USER_ID, user.getId());
         log.info("claims: {}", claims);
         String token = JwtUtil.createJWT(
                 jwtProperties.getAdminSecretKey(),
-                jwtProperties.getAdminTtl(),
+                jwtProperties.getAdminTtl(),        // 登录会话持续时长，超过则需要重新登录
                 claims);
 
         UserLoginVO employeeLoginVO = UserLoginVO.builder()
@@ -61,6 +62,9 @@ public class UserController {
 
     @PostMapping("/changePassword")
     public Result<String> changePassword(@RequestBody UserPasswordDTO userPasswordDTO) {
+        /**
+         * 要求获取用户名和老密码，验证身份成功后才修改密码为新密码
+         */
         log.info("修改用户密码:{}", userPasswordDTO);
         Boolean result = userService.changePassword(userPasswordDTO);
         if (result) {
@@ -71,6 +75,9 @@ public class UserController {
 
     @PostMapping("/register")
     public Result<String> addUser(@RequestBody UserAddDTO userAddDTO) {
+        /**
+         * 注册新用户
+         */
         log.info("添加用户:{}",  userAddDTO);
         Boolean result = userService.addUser(userAddDTO);
         if (result) {
@@ -81,6 +88,9 @@ public class UserController {
 
     @GetMapping("/delete/{userId}")
     public Result deleteUser(@PathVariable("userId") Integer userId) {
+        /**
+         * 注销用户，admin用户不允许删除
+         */
         log.info("删除用户:{}", userId);
         if (userId == 1) {
             return Result.error("不能删除admin用户");

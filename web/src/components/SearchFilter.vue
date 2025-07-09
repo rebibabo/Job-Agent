@@ -86,7 +86,7 @@
         <el-dialog title="保存规则" :visible.sync="ruleDialogVisible" width="500px" append-to-body>  <!-- 加上append-to-body置顶 -->
             <el-form :model="ruleInfo" label-width="80px">
                 <el-form-item label="规则名称">
-                    <el-input v-model="ruleInfo.ruleName" placeholder="请输入规则名称" @keyup.enter.native="onRuleNameEnter"/>
+                    <el-input v-model="ruleInfo.ruleName" placeholder="请输入规则名称" @keyup.enter.native="onRuleNameEnter"/>  <!-- 按回车键触发onRuleNameEnter -->
                 </el-form-item>
                 <el-form-item label="规则描述">
                     <el-input type="textarea" v-model="ruleInfo.ruleDescription" ref="ruleDescription" placeholder="请输入规则描述" @keyup.enter.native="onUserDescEnter"/>
@@ -210,18 +210,18 @@ export default {
         },
         getJobList() {
             console.log(this.localFilters)
-            this.$emit('change', { ...this.localFilters });
+            this.$emit('change', { ...this.localFilters });  // 调用父组件的 change 事件
             this.$emit('submit');
         },
         handleSelectChange(field, val) {
-            const last = val[val.length - 1];
-            if (val.length === 0) {
-                this.localFilters[field] = ['不限'];
-            } else if (this.localFilters[field].length === 2 && this.localFilters[field][0] === '不限') {
-                this.localFilters[field] = val.slice(1);
-            } else if (last === '不限') {
-                this.localFilters[field] = ['不限'];
-            } else {
+            const last = val[val.length - 1]; // 最后一个选项
+            if (val.length === 0) {     // 如果清空了所有选项
+                this.localFilters[field] = ['不限'];        // 将其设置为不限
+            } else if (this.localFilters[field].length === 2 && this.localFilters[field][0] === '不限') {       // 如果之前是不限，现在选择了其他选项
+                this.localFilters[field] = val.slice(1);    // 则只保留新选择的选项，取消不限选项
+            } else if (last === '不限') {       // 如果之前多选了选项，现在选择了不限选项
+                this.localFilters[field] = ['不限'];        // 则只保留不限选项
+            } else {         // 否则，新增多选的选项
                 this.localFilters[field] = val;
             }
             this.getJobList();
@@ -246,6 +246,7 @@ export default {
             this.ruleDialogVisible = true;
         },
         convertFiltersToString(filters) {
+            // 将 filters 对象转化为字符串，显示在规则属性中
             const result = {};
             for (const key in filters) {
                 const value = filters[key];
@@ -347,6 +348,3 @@ export default {
     }
 };
 </script>
-  
-<style scoped></style>
-  

@@ -54,13 +54,13 @@ public class JwtTokenAdminInterceptor implements HandlerInterceptor {
             Long empId = Long.valueOf(claims.get(JwtClaimsConstant.USER_ID).toString());
             log.info("当前员工id：{}", empId);
 
-//            将用户id存储到ThreadLocal
+            // 将用户id存储到ThreadLocal
             BaseContext.setCurrentId(empId);
 
             //3、通过，放行
             return true;
         } catch (Exception ex) {
-            //4、不通过，响应401状态码
+            //4、不通过，响应401状态码，包括token被篡改、或者登录状态超时
             response.setStatus(401);
             log.info("令牌已过期");
             return false;

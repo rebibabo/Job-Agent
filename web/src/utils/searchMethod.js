@@ -14,19 +14,13 @@ export default {
     startJob(getDesc = false) {
         // 清理可能残留的定时器
         this.loading = true;
-        if (this.timer) {
-            clearInterval(this.timer);
-            this.timer = null;
-        }
+
         if (this.tableTimer) {
             clearInterval(this.tableTimer);
             this.tableTimer = null;
         }
         this.fetchJobList();
-        
-
-        // 假设启动任务接口
-        this.status = null;
+                
         const params = { userId: this.$store.state.user.userInfo.id };
         params.getDesc = getDesc;
         for (const key in this.filters) {
@@ -38,10 +32,10 @@ export default {
             }
         }
         params.filterHash = getFiltersMD5(this.filters);
-        console.log(params)
         axios.post('/crawl/start/joblist', params)
             .then(() => {
                 this.progress = 0;
+                this.status = null;
                 this.pollProgress();
                 this.getJobTableTimer();
             })
@@ -53,10 +47,7 @@ export default {
     },
     stopJob() {
         this.loading = false;
-        if (this.timer) {
-            clearInterval(this.timer);
-            this.timer = null;
-        }
+
         if (this.tableTimer) {
             clearInterval(this.tableTimer);
             this.tableTimer = null;
@@ -67,46 +58,47 @@ export default {
             });
     },
     pollProgress() {
-        // 定时向后端获取进度
-        this.timer = setInterval(() => {
+        // 采用递归方式，而不是轮循的方式，能够解决进度条卡顿的问题，及1s更新内，如果DOM没有渲染下来，又会开启下一轮的轮询，导致内存占用过高
+        const poll = () => {
+            console.log('[轮询触发]', new Date().toISOString());
+    
             axios.get('/crawl/progress')
                 .then(response => {
                     this.progress = response.data.percentage;
                     if (this.progress < 0) {
                         this.$message.error(response.data.error);
-                        clearInterval(this.timer);
-                        clearInterval(this.tableTimer);
-                    }
-                    else if (this.progress >= 100) {
+                    } else if (this.progress >= 100) {
                         this.loading = false;
                         this.status = 'success';
-                        clearInterval(this.timer);
-                        clearInterval(this.tableTimer);
                         this.fetchJobList();
+                        return;
+                    } else {
+                        this.fetchJobList();
+                        setTimeout(poll, 1000);  // 下一轮
                     }
                 })
                 .catch((err) => {
                     this.$message.error(err.message || '获取进度失败');
                     this.status = 'exception';
-                    clearInterval(this.timer);
                 });
-        }, 1000); // 每1秒轮询一次
+        }
+    
+        poll(); // 启动轮询
     },
     getJobTableTimer() {
+        // 定时更新job列表
         this.tableTimer = setInterval(() => {
             this.fetchJobList();
         }, 1000); // 每1s更新一次
     },
     async fetchJobList() {
         try {
-            const filterHash = getFiltersMD5(this.filters);
             const params = {
                 userId: this.$store.state.user.userInfo.id,
-                filterHash: filterHash,
+                filterHash: getFiltersMD5(this.filters),
                 page: this.currentPage,
                 pageSize: this.pageSize
             }
-            console.log(params)
             const response = await jobListFilterAPI(params)
             this.jobList = response.data.items
             this.totalNumber = response.data.total
@@ -117,7 +109,7 @@ export default {
     async fetchJobListAndRestore() {
         await this.fetchJobList();
         this.$nextTick(() => {
-            this.$refs.jobTableRef.restoreSelection();
+            this.$refs.jobTableRef.restoreSelection();      // 还原表格的选中状态，支持跨页保存选中状态
         });
     }
 }

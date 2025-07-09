@@ -10,7 +10,7 @@
       router
     >
       
-      <el-menu-item index="/homePage">
+      <el-menu-item index="/homePage" @click="$emit('menu-click', '')">  <!-- 点击菜单栏时设置顶部导航栏的标题 -->
         <i class="el-icon-s-home"></i>
         <span slot="title">首页</span>
       </el-menu-item>

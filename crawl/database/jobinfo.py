@@ -8,6 +8,7 @@ import requests
 
 @builder
 class JobInfo:
+    # 职位信息类，跨三张表: job, company, user_job
     securityId: str = ""
     jobName: str = ""
     jobType: str = ""
@@ -46,6 +47,7 @@ class JobInfo:
     
     @classmethod
     def from_dict(cls, js):
+        # 工厂方法，从字典中创建对象
         allowed_keys = set(cls.__annotations__.keys())
         obj = cls.__new__(cls)  # 创建空实例，不调用 __init__
         for k, v in js.items():
@@ -60,10 +62,11 @@ class JobInfo:
         return str + '\n'
 
 class InsertDTO:    
+    # 插入数据库的数据传输类
     def __init__(self, userId: str, jobs: List[JobInfo], filterHash: str):
-        self.userId = userId
-        self.jobs = jobs
-        self.filterHash = filterHash or ""
+        self.userId = userId    # 用户id
+        self.jobs = jobs        # 职位列表
+        self.filterHash = filterHash or ""      # 过滤hash值
         self.headers = get_headers(userId)       
             
     def commit_to_db(self):
@@ -82,6 +85,7 @@ class InsertDTO:
         return False
     
 class WhetherAddDescDTO:
+    # 是否需要插入岗位描述信息的传输类
     def __init__(self, userId: str):
         self.userId = str(userId)
         self.headers = get_headers(userId)
@@ -93,6 +97,7 @@ class WhetherAddDescDTO:
             "city": city,
             "companyId": companyId
         }
+        # 根据city, companyId, jobName定位唯一岗位，如果不存在，则需要插入，如果存在且描述为空，则需要更新，返回true，否则不需要更新，返回false。
         response = requests.post(DESC_URL, json=params, headers=self.headers)
         if response.status_code == 200:
             result = response.json()["data"]
