@@ -52,8 +52,8 @@ class GPTFilter:
         model: str = DEFAULT_MODEL, 
         temperature: float = 0.5,
         status=None,
-        repeat=1,       # 重复问答的次数，取多次结果提高准确率
-        threshold=1,    # 过滤的阈值，当重复问答的结果中，某个岗位的出现次数超过阈值，则认为该岗位符合查询条件，应当被过滤
+        repeat=3,       # 重复问答的次数，取多次结果提高准确率
+        threshold=2,    # 过滤的阈值，当重复问答的结果中，某个岗位的出现次数超过阈值，则认为该岗位符合查询条件，应当被过滤
         api_key: str = None,
         base_url: str = None,
     ) -> List[JobInfo]:

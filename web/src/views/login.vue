@@ -179,10 +179,10 @@ $dark_gray: #889aa4;
 $light_gray: #eee;
 
 .login-container {
-    min-height: 45vh;
+    min-height: 500px;
     width: 70%;
-    max-width: 1000px;
-    margin: 300px auto 0;
+    max-width: 1200px;
+    margin: 100px auto 0;
 
     .login-wrapper {
         display: flex;

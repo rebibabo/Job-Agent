@@ -61,7 +61,7 @@ class GPTRanker:
         model: str = DEFAULT_MODEL, 
         temperature: float = 0.5,
         status=None,
-        repeat: int = 1,
+        repeat: int = 5,
         api_key: str = None,
         base_url: str = None,
     ) -> List[JobInfo]:
