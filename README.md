@@ -50,14 +50,14 @@
 
 ```
 JobAgent/                        # 项目根目录
-├── web/                         # 🌐 前端代码（基于 Vue）
+├── web/                         # 🌐 前端代码（基于 Vue2）
 │   ├── vue.config.js            # Vue 配置文件
 │   └── src/                     # 前端源码目录
 │       ├── App.vue              # 应用主组件入口
-│       ├── views/               # 各个页面视图（如主页、详情页等）
-│       ├── utils/               # 通用工具函数（如时间格式化、请求封装等）
-│       ├── store/               # Vuex 状态管理（用户信息、全局状态等）
-│       ├── router/              # 路由配置文件（页面跳转规则）
+│       ├── views/               # 各个页面视图
+│       ├── utils/               # 通用工具函数
+│       ├── store/               # Vuex 状态管理用户信息
+│       ├── router/              # 路由配置文件
 │       ├── components/          # 通用组件（按钮、弹窗、表格等）
 │       └── api/                 # 与后端通信的 API 封装模块
 
@@ -66,10 +66,10 @@ JobAgent/                        # 项目根目录
 │   ├── application.yml          # 后端配置文件
 │   ├── resume_routes.py         # 简历上传/解析等接口定义
 │   ├── utils/                   # Python 工具函数
-│   ├── database/                # 数据库操作封装（连接池、模型等）
+│   ├── database/                # 数据库操作封装
 │   ├── crawler/                 # Playwright 自动化爬虫模块
-│   ├── cache/                   # 本地缓存（简历、任务队列等）
-│   └── agent/                   # 与 OpenAI 模型交互逻辑（问答、摘要等）
+│   ├── cache/                   # 本地缓存
+│   └── agent/                   # 与 OpenAI 模型交互逻辑
 
 ├── src/                         # ☕ Java 后端目录（Spring Boot 项目）
 │   └── main/
@@ -82,14 +82,14 @@ JobAgent/                        # 项目根目录
 │                   ├── JobAgentApplication.java   # Java 后端启动类
 │                   ├── controller/                # 控制层（处理 HTTP 请求）
 │                   ├── dto/                       # 数据传输对象（前后端交互结构）
-│                   ├── entity/                    # 实体类（数据库表结构映射）
+│                   ├── entity/                    # 实体类
 │                   ├── exception/                 # 全局异常处理
-│                   ├── handle/                    # 通用处理器（如响应封装、拦截器处理）
-│                   ├── interceptor/               # 拦截器（如登录校验、日志记录）
-│                   ├── mapper/                    # MyBatis 映射接口（与数据库交互）
+│                   ├── handle/                    # 异常捕获
+│                   ├── interceptor/               # 登录校验拦截器
+│                   ├── mapper/                    # MyBatis 映射接口
 │                   ├── service/                   # 业务逻辑层
 │                   │   └── impl/                  # 业务实现类
-│                   ├── utils/                     # 工具类（如加解密、Token处理）
+│                   ├── utils/                     # 工具类
 │                   └── vo/                        # 视图对象（后端向前端返回的数据封装）
 
 
