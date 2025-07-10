@@ -134,3 +134,115 @@ JobAgent/                        # 项目根目录
 - Python 3.12+
 - Node.js 10.9+
 - MySQL 5.7+
+- Maven 3.9+
+
+- Java工具包：pom.xml
+- Vue工具包：package.json
+- Python工具包：requirements.txt
+
+
+
+## 安装搭建
+
+**Python安装配置**
+
+在crawl目录下执行以下命令
+
+```shell
+pip install requirements.txt
+```
+
+
+
+**数据库建表**
+
+在crawl目录下执行以下命令
+
+```shell
+python -m database.init
+```
+
+表说明：
+
+- city：各省市区的城市和编码
+- industry：行业分类和编码
+- title：岗位分类和编码
+- company：公司信息，包括融资阶段、规模人数、福利等
+- job：岗位信息，包括名称、公司id（外键company）、地点、薪资、学历要求、经验要求、行业等
+- user：员工信息，即用户名和密码
+- user_job：用户岗位查询表，员工id（外键user），岗位id（外键job）、过滤规则哈希值、查看状态和简历投递状态
+- user_rule：保存用户搜索规则
+
+
+
+**环境变量配置**
+
+向系统环境变量中添加以下变量，分别表示OpenAI的api_key以及镜像地址
+
+```
+OPENAI_API_KEY
+OPENAI_BASE_URL
+```
+
+
+
+**前端环境安装**
+
+进入web目录下执行以下命令
+
+```
+npm install
+```
+
+
+
+**Java环境安装**
+
+进入src目录下执行以下命令，安装环境
+
+```
+mvn install
+```
+
+然后执行下面命令生成jar包
+
+```
+mvn clean package
+```
+
+
+
+
+
+## 项目启动
+
+确保启动了MySQL服务
+
+
+
+**前端启动**
+
+在web目录下执行以下命令
+
+```
+npm run serve
+```
+
+
+
+**Java后端启动**
+
+```
+java -jar target/JobAgent-0.0.1-SNAPSHOT.jar
+```
+
+
+
+**Python后端启动**
+
+在crawl目录下执行下面命令
+
+```
+python app.py
+```
+

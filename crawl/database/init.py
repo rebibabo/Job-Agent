@@ -2,7 +2,6 @@ from database.connector import db_pool
 from utils.tools import md5_encrypt
 from loguru import logger
 
-
 import json
 
 def init_city_table(tables):
@@ -254,3 +253,6 @@ def create_tables():
         logger.error(e)
         
     logger.success('数据库初始化完成')
+    
+if __name__ == '__main__':
+    create_tables()

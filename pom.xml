@@ -103,7 +103,6 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.jobagent.JobAgentApplication</mainClass>
-                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>
