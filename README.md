@@ -170,7 +170,7 @@ python -m database.init
 - company：公司信息，包括融资阶段、规模人数、福利等
 - job：岗位信息，包括名称、公司id（外键company）、地点、薪资、学历要求、经验要求、行业等
 - user：员工信息，即用户名和密码
-- user_job：用户岗位查询表，员工id（外键user），岗位id（外键job）、过滤规则哈希值、查看状态和简历投递状态
+- user_job：用户岗位查询表，员工id（外键user），岗位id（外键job）、过滤规则哈希值、查看状态和投递状态
 - user_rule：保存用户搜索规则
 
 
