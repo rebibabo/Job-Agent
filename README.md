@@ -207,7 +207,8 @@ sudo ./mysqld --defaults-file=/etc/my.cnf --basedir=/usr/local/mysql/ --datadir=
 cat /data/mysql/mysql.err | grep localhost
 ```
 
-![image-20250710103916981](image/image-20250710103916981.png)
+![image-20250710103916981](https://github.com/user-attachments/assets/ceaaf550-a147-4484-81f7-6fd8e9d2b240)
+
 
 运行`mysql -u root -p`，输入显示的默认密码，进入之后修改root密码
 
