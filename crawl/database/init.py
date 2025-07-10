@@ -126,7 +126,7 @@ def init_company_table(tables):
         logger.info('创建 company 表')
         db_pool.execute('''
             CREATE TABLE company (
-                id VARCHAR(40) NOT NULL COMMENT '公司id',
+                id VARCHAR(40) NOT NULL PRIMARY KEY COMMENT '公司id',
                 name VARCHAR(100) NOT NULL COMMENT '公司名称',
                 stage VARCHAR(20) COMMENT '公司融资阶段',
                 scale VARCHAR(30) COMMENT '公司人员规模',
@@ -160,7 +160,7 @@ def init_job_table(tables):
                 title VARCHAR(30) COMMENT '职位类型',    
                 skills VARCHAR(300) COMMENT '工作技能需求标签',
                 description TEXT COMMENT '职位描述',
-                UNIQUE KEY unique_job (jobName, city, companyId)
+                UNIQUE KEY unique_job (jobName, city, companyId),
                 FOREIGN KEY (companyId) REFERENCES company(id)
             )'''
         )
@@ -245,8 +245,8 @@ def create_tables():
         init_city_table(tables)
         init_industry_table(tables) 
         init_title_table(tables)   
-        init_job_table(tables) 
         init_company_table(tables)
+        init_job_table(tables) 
         init_other_tables(tables)
             
     except Exception as e:

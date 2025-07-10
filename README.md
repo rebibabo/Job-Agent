@@ -144,12 +144,134 @@ JobAgent/                        # 项目根目录
 
 ## 安装搭建
 
+**mysql安装**
+
+首先切换到root用户`sudo su`
+
+依次执行下面命令
+
+```
+mkdir mysql && cd mysql
+wget https://downloads.mysql.com/archives/get/p/23/file/mysql-8.4.0-linux-glibc2.17-x86_64-minimal.tar.xz
+groupadd mysql
+useradd -r -g mysql -s /bin/false mysql
+tar -xvf mysql*.tar.xz -C /usr/local
+cd /usr/local
+mv mysql*/ mysql
+cd mysql
+mkdir mysql-files
+chown mysql:mysql mysql-files
+chmod 750 mysql-files
+apt-get install libaio1 libncurses5
+bin/mysqld_safe --user=mysql
+export PATH=$PATH:/usr/local/mysql/bin
+mkdir -p /data/mysql
+chown mysql:mysql -R /data/mysql
+chown mysql:mysql -R /tmp
+cp /usr/local/mysql/support-files/mysql.server /etc/init.d/mysql
+```
+
+然后添加配置文件
+
+```
+vi /etc/my.cnf
+```
+
+内容如下
+
+```
+[mysqld]
+bind-address=0.0.0.0
+port=3306
+user=mysql
+basedir=/usr/local/mysql
+datadir=/data/mysql
+socket=/tmp/mysql.sock
+log-error=/data/mysql/mysql.err
+pid-file=/data/mysql/mysql.pid
+#character config
+character_set_server=utf8mb4
+symbolic-links=0
+explicit_defaults_for_timestamp=true
+```
+
+然后进入bin目录下运行下面命令初始化
+
+```
+sudo ./mysqld --defaults-file=/etc/my.cnf --basedir=/usr/local/mysql/ --datadir=/data/mysql/ --user=mysql --initialize
+```
+
+查看初始密码
+
+```
+cat /data/mysql/mysql.err | grep localhost
+```
+
+![image-20250710103916981](image/image-20250710103916981.png)
+
+运行`mysql -u root -p`，输入显示的默认密码，进入之后修改root密码
+
+```sql
+ALTER USER 'root'@'localhost' IDENTIFIED BY '123456';
+```
+
+
+
+**创建用户和数据库**
+
+```sql
+CREATE USER 'rebibabo'@'%' IDENTIFIED BY '123456';
+GRANT ALL PRIVILEGES ON *.* TO 'rebibabo'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+CREATE DATABASE jobagent;
+```
+
+
+
+**安装Java11**
+
+```
+apt update
+apt install openjdk-11-jdk -y
+java -version
+```
+
+
+
+**安装mvn**
+
+```
+apt install maven -y
+mvn -v
+```
+
+
+
+**安装nodejs和npm**
+
+```
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt-get install -y nodejs
+node -v
+npm -v
+```
+
+
+
+**下载源代码**
+
+```
+git clone https://github.com/rebibabo/Job-Agent.git
+```
+
+
+
 **Python安装配置**
 
 在crawl目录下执行以下命令
 
 ```shell
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 
@@ -198,7 +320,7 @@ npm install
 
 **Java环境安装**
 
-进入src目录下执行以下命令，安装环境
+进入根目录执行以下命令，安装环境
 
 ```
 mvn install
@@ -216,10 +338,6 @@ mvn clean package
 
 ## 项目启动
 
-确保启动了MySQL服务
-
-
-
 **前端启动**
 
 在web目录下执行以下命令
@@ -231,6 +349,8 @@ npm run serve
 
 
 **Java后端启动**
+
+在根目录下执行以下命令
 
 ```
 java -jar target/JobAgent-0.0.1-SNAPSHOT.jar
@@ -245,4 +365,10 @@ java -jar target/JobAgent-0.0.1-SNAPSHOT.jar
 ```
 python app.py
 ```
+
+
+
+
+
+
 

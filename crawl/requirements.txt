@@ -2,8 +2,10 @@ DBUtils
 pymysql
 pyyaml
 flask
+openai
 PyMuPDF
 playwright
 loguru
 requests
 uiautomation
+langchain_community
